@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Meal Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 16px;
+      padding-bottom: 80px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+    .week-info {
+      text-align: center;
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 20px;
+    }
+    .category { margin-bottom: 24px; }
+    .category h2 {
+      font-size: 18px;
+      color: #f0a500;
+      margin-bottom: 10px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #333;
+    }
+    .meal-card {
+      display: flex;
+      align-items: center;
+      background: #16213e;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      transition: background 0.3s;
+    }
+    .meal-card.done { background: #1b3a2a; }
+    .meal-card.in-progress { background: #2a2a1b; }
+    .meal-info { flex: 1; }
+    .meal-name { font-size: 16px; font-weight: 600; color: #fff; }
+    .meal-cover { font-size: 13px; color: #888; margin-top: 2px; }
+    .meal-progress { display: flex; align-items: center; gap: 8px; }
+    .progress-text {
+      font-size: 18px;
+      font-weight: 700;
+      min-width: 60px;
+      text-align: center;
+      color: #fff;
+    }
+    .progress-text.done { color: #4ade80; }
+    .progress-text.in-progress { color: #fbbf24; }
+    .btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      font-size: 22px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active { transform: scale(0.9); }
+    .btn-minus { background: #3a1c1c; color: #f87171; }
+    .btn-plus { background: #1c3a1c; color: #4ade80; }
+    .btn:disabled { opacity: 0.3; cursor: default; }
+    .empty-state { text-align: center; padding: 60px 20px; color: #666; }
+    .empty-state p { font-size: 16px; margin-top: 12px; }
+    .summary-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: #16213e;
+      border-top: 1px solid #333;
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .summary-bar .done-count { color: #4ade80; }
+    .summary-bar .remaining { color: #fbbf24; }
+    .loading { text-align: center; padding: 60px; color: #666; font-size: 18px; }
+    .error { text-align: center; padding: 40px; color: #f87171; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>Meal Tracker</h1>
+  <div class="week-info" id="weekInfo">Loading...</div>
+  <div id="app"><div class="loading">Loading...</div></div>
+  <div class="summary-bar" id="summaryBar" style="display:none">
+    <span>Done: <span class="done-count" id="doneCount">0</span></span>
+    <span>Remaining: <span class="remaining" id="remainCount">0</span></span>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+    const { createClient } = supabase;
+    const db = createClient(
+      'https://wooencmwsjoaguyhmsan.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indvb2VuY213c2pvYWd1eWhtc2FuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NzA3NTYsImV4cCI6MjA5MTA0Njc1Nn0.TmBQoQTgtzgyqBKSzDQ7RrlTXlXCyT9Qu7F_jmWmSMQ'
+    );
+
+    const CATEGORIES = [
+      { key: 'snidane', label: 'Sn\u00eddan\u011b' },
+      { key: 'svaciny', label: 'Sva\u010diny' },
+      { key: 'obed', label: 'Ob\u011bd' },
+      { key: 'vecere', label: 'Ve\u010de\u0159e' }
+    ];
+
+    let meals = [];
+
+    async function loadMeals() {
+      try {
+        const { data, error } = await db
+          .from('weekly_meals')
+          .select('*')
+          .order('week_start', { ascending: false })
+          .order('id', { ascending: true });
+
+        if (error) throw error;
+        if (!data || data.length === 0) {
+          meals = [];
+          render();
+          return;
+        }
+
+        const latestWeek = data[0].week_start;
+        meals = data.filter(m => m.week_start === latestWeek);
+        document.getElementById('weekInfo').textContent = 'Week of ' + latestWeek;
+        render();
+      } catch (err) {
+        document.getElementById('app').innerHTML =
+          '<div class="error">Error: ' + err.message + '</div>';
+      }
+    }
+
+    async function updateCount(id, delta) {
+      const meal = meals.find(m => m.id === id);
+      if (!meal) return;
+      const newCount = Math.max(0, Math.min(meal.total, parseFloat(meal.count) + delta));
+      meal.count = newCount;
+      render();
+
+      const { error } = await db
+        .from('weekly_meals')
+        .update({ count: newCount })
+        .eq('id', id);
+
+      if (error) {
+        meal.count = newCount - delta;
+        render();
+      }
+    }
+
+    function render() {
+      const app = document.getElementById('app');
+      if (meals.length === 0) {
+        app.innerHTML = '<div class="empty-state"><p>No meals for this week yet.</p><p style="margin-top:8px;color:#555">Run /meal-prep to populate the tracker.</p></div>';
+        document.getElementById('summaryBar').style.display = 'none';
+        return;
+      }
+
+      let html = '';
+      let totalDone = 0;
+      let totalRemaining = 0;
+
+      for (const cat of CATEGORIES) {
+        const catMeals = meals.filter(m => m.category === cat.key);
+        if (catMeals.length === 0) continue;
+
+        html += '<div class="category"><h2>' + cat.label + '</h2>';
+        for (const m of catMeals) {
+          const count = parseFloat(m.count);
+          const isDone = count >= m.total;
+          const inProgress = count > 0 && !isDone;
+          const cardClass = isDone ? 'done' : (inProgress ? 'in-progress' : '');
+          const textClass = isDone ? 'done' : (inProgress ? 'in-progress' : '');
+
+          if (isDone) totalDone += m.total;
+          else { totalDone += count; totalRemaining += (m.total - count); }
+
+          html += '<div class="meal-card ' + cardClass + '">';
+          html += '  <div class="meal-info">';
+          html += '    <div class="meal-name">' + m.meal_name + '</div>';
+          html += '    <div class="meal-cover">' + m.cover_name + '</div>';
+          html += '  </div>';
+          html += '  <div class="meal-progress">';
+          html += '    <button class="btn btn-minus" onclick="updateCount(' + m.id + ', -0.5)" ' + (count <= 0 ? 'disabled' : '') + '>\u2212</button>';
+          html += '    <div class="progress-text ' + textClass + '">' + count + '/' + m.total + '</div>';
+          html += '    <button class="btn btn-plus" onclick="updateCount(' + m.id + ', 0.5)" ' + (isDone ? 'disabled' : '') + '>+</button>';
+          html += '  </div>';
+          html += '</div>';
+        }
+        html += '</div>';
+      }
+
+      app.innerHTML = html;
+      document.getElementById('summaryBar').style.display = 'flex';
+      document.getElementById('doneCount').textContent = totalDone;
+      document.getElementById('remainCount').textContent = totalRemaining;
+    }
+
+    loadMeals();
+  </script>
+</body>
+</html>
