@@ -78,6 +78,44 @@
     .btn-minus { background: #3a1c1c; color: #f87171; }
     .btn-plus { background: #1c3a1c; color: #4ade80; }
     .btn:disabled { opacity: 0.3; cursor: default; }
+    .meal-card { cursor: pointer; }
+    .meal-details {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      background: #0f1a33;
+      border-radius: 0 0 12px 12px;
+      margin-top: -8px;
+      margin-bottom: 8px;
+    }
+    .meal-details.open { max-height: 400px; }
+    .meal-details table {
+      width: 100%;
+      padding: 8px 16px 12px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .meal-details th {
+      color: #f0a500;
+      font-weight: 600;
+      text-align: left;
+      padding: 4px 8px;
+      border-bottom: 1px solid #333;
+      font-size: 12px;
+    }
+    .meal-details td {
+      padding: 4px 8px;
+      color: #ccc;
+    }
+    .meal-details td:first-child { color: #fff; }
+    .meal-details td.dash { color: #555; }
+    .chevron {
+      color: #555;
+      font-size: 14px;
+      margin-left: 8px;
+      transition: transform 0.3s;
+    }
+    .chevron.open { transform: rotate(180deg); }
     .empty-state { text-align: center; padding: 60px 20px; color: #666; }
     .empty-state p { font-size: 16px; margin-top: 12px; }
     .summary-bar {
@@ -167,6 +205,27 @@
       }
     }
 
+    function toggleDetail(id) {
+      const el = document.getElementById('detail-' + id);
+      const chev = document.getElementById('chev-' + id);
+      if (el) {
+        el.classList.toggle('open');
+        if (chev) chev.classList.toggle('open');
+      }
+    }
+
+    function renderDetails(details) {
+      if (!details || details.length === 0) return '';
+      let t = '<table><tr><th>Ingredient</th><th>Naty</th><th>Filip</th></tr>';
+      for (const d of details) {
+        const nClass = d.naty === '\u2014' ? ' class="dash"' : '';
+        const fClass = d.filip === '\u2014' ? ' class="dash"' : '';
+        t += '<tr><td>' + d.name + '</td><td' + nClass + '>' + d.naty + '</td><td' + fClass + '>' + d.filip + '</td></tr>';
+      }
+      t += '</table>';
+      return t;
+    }
+
     function render() {
       const app = document.getElementById('app');
       if (meals.length === 0) {
@@ -190,21 +249,26 @@
           const inProgress = count > 0 && !isDone;
           const cardClass = isDone ? 'done' : (inProgress ? 'in-progress' : '');
           const textClass = isDone ? 'done' : (inProgress ? 'in-progress' : '');
+          const hasDetails = m.details && m.details.length > 0;
 
           if (isDone) totalDone += m.total;
           else { totalDone += count; totalRemaining += (m.total - count); }
 
-          html += '<div class="meal-card ' + cardClass + '">';
+          html += '<div class="meal-card ' + cardClass + '" onclick="toggleDetail(' + m.id + ')">';
           html += '  <div class="meal-info">';
-          html += '    <div class="meal-name">' + m.meal_name + '</div>';
+          html += '    <div class="meal-name">' + m.meal_name + (hasDetails ? ' <span class="chevron" id="chev-' + m.id + '">\u25BC</span>' : '') + '</div>';
           html += '    <div class="meal-cover">' + m.cover_name + '</div>';
           html += '  </div>';
           html += '  <div class="meal-progress">';
-          html += '    <button class="btn btn-minus" onclick="updateCount(' + m.id + ', -0.5)" ' + (count <= 0 ? 'disabled' : '') + '>\u2212</button>';
+          html += '    <button class="btn btn-minus" onclick="event.stopPropagation(); updateCount(' + m.id + ', -0.5)" ' + (count <= 0 ? 'disabled' : '') + '>\u2212</button>';
           html += '    <div class="progress-text ' + textClass + '">' + count + '/' + m.total + '</div>';
-          html += '    <button class="btn btn-plus" onclick="updateCount(' + m.id + ', 0.5)" ' + (isDone ? 'disabled' : '') + '>+</button>';
+          html += '    <button class="btn btn-plus" onclick="event.stopPropagation(); updateCount(' + m.id + ', 0.5)" ' + (isDone ? 'disabled' : '') + '>+</button>';
           html += '  </div>';
           html += '</div>';
+
+          if (hasDetails) {
+            html += '<div class="meal-details" id="detail-' + m.id + '">' + renderDetails(m.details) + '</div>';
+          }
         }
         html += '</div>';
       }
