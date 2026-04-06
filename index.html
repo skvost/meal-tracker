@@ -116,6 +116,113 @@
       transition: transform 0.3s;
     }
     .chevron.open { transform: rotate(180deg); }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #16213e;
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .section-header h2 {
+      font-size: 18px;
+      color: #f0a500;
+      margin: 0;
+      border: none;
+      padding: 0;
+    }
+    .section-header .chevron {
+      color: #f0a500;
+      font-size: 14px;
+      transition: transform 0.3s;
+    }
+    .section-header .chevron.open { transform: rotate(180deg); }
+    .section-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease;
+    }
+    .section-body.open { max-height: 2000px; }
+    .section-content {
+      background: #16213e;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .section-content h3 {
+      color: #f0a500;
+      font-size: 15px;
+      margin-bottom: 10px;
+    }
+    .section-content p, .section-content li {
+      font-size: 14px;
+      color: #ccc;
+      line-height: 1.6;
+    }
+    .section-content ul {
+      padding-left: 20px;
+      margin-bottom: 12px;
+    }
+    .section-content li { margin-bottom: 4px; }
+    .recipe-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .recipe-toggle button {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 2px solid #333;
+      background: transparent;
+      color: #888;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .recipe-toggle button.active {
+      border-color: #f0a500;
+      color: #f0a500;
+      background: #2a2510;
+    }
+    .recipe-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+    .recipe-table th {
+      color: #f0a500;
+      font-weight: 600;
+      text-align: left;
+      padding: 6px 8px;
+      border-bottom: 1px solid #333;
+      font-size: 12px;
+    }
+    .recipe-table td {
+      padding: 6px 8px;
+      color: #ccc;
+    }
+    .tip-card {
+      background: #0f1a33;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+    }
+    .tip-card .tip-label {
+      color: #f0a500;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .tip-card .tip-value {
+      color: #fff;
+      font-size: 14px;
+    }
     .empty-state { text-align: center; padding: 60px 20px; color: #666; }
     .empty-state p { font-size: 16px; margin-top: 12px; }
     .summary-bar {
@@ -140,6 +247,97 @@
   <h1>Meal Tracker</h1>
   <div class="week-info" id="weekInfo">Loading...</div>
   <div id="app"><div class="loading">Loading...</div></div>
+  <!-- Lunch Recipe Section -->
+  <div style="margin-top: 32px;">
+    <div class="section-header" onclick="toggleSection('recipe')">
+      <h2>Recept na ob\u011bd</h2>
+      <span class="chevron" id="chev-recipe">\u25BC</span>
+    </div>
+    <div class="section-body" id="section-recipe">
+      <div class="section-content">
+        <div class="recipe-toggle">
+          <button id="btn-beef" class="active" onclick="showRecipe('beef')">Hov\u011bz\u00ed</button>
+          <button id="btn-chicken" onclick="showRecipe('chicken')">Ku\u0159ec\u00ed</button>
+        </div>
+
+        <div id="recipe-beef">
+          <h3>Hov\u011bz\u00ed mlet\u00e9 + t\u011bstoviny (7 porc\u00ed)</h3>
+          <table class="recipe-table">
+            <tr><th>Ingredience</th><th>Naty</th><th>Filip</th><th>Celkem</th></tr>
+            <tr><td>Hov\u011bz\u00ed mlet\u00e9 10%</td><td>150g</td><td>200g</td><td>2450g</td></tr>
+            <tr><td>T\u011bstoviny</td><td>50g</td><td>40g</td><td>630g</td></tr>
+            <tr><td>Ob\u011bd zelenina</td><td>80g</td><td>100g</td><td>1260g</td></tr>
+          </table>
+          <p style="color:#888;font-size:12px;">V\u00e1hy jsou v syrov\u00e9m stavu, na porci.</p>
+        </div>
+
+        <div id="recipe-chicken" style="display:none">
+          <h3>Ku\u0159ec\u00ed prsa + r\u00fd\u017ee (7 porc\u00ed)</h3>
+          <table class="recipe-table">
+            <tr><th>Ingredience</th><th>Naty</th><th>Filip</th><th>Celkem</th></tr>
+            <tr><td>Ku\u0159ec\u00ed prsa</td><td>105g</td><td>126g</td><td>1617g</td></tr>
+            <tr><td>R\u00fd\u017ee</td><td>50g</td><td>60g</td><td>770g</td></tr>
+            <tr><td>Ob\u011bd zelenina</td><td>80g</td><td>100g</td><td>1260g</td></tr>
+            <tr><td>Jogurt</td><td>150g</td><td>150g</td><td>2100g</td></tr>
+          </table>
+          <p style="color:#888;font-size:12px;">V\u00e1hy jsou v syrov\u00e9m stavu, na porci.</p>
+        </div>
+
+        <h3 style="margin-top:16px">N\u00e1doby &amp; v\u00e1hy</h3>
+        <table class="recipe-table">
+          <tr><th>N\u00e1doba</th><th>T\u00e1ra</th></tr>
+          <tr><td>Nerez miska tenk\u00e1</td><td>570g</td></tr>
+          <tr><td>M\u00ed\u0161a vol 2</td><td>458g</td></tr>
+          <tr><td>Wok</td><td>1052g</td></tr>
+          <tr><td>R\u00fd\u017eovar vnit\u0159ek</td><td>180g</td></tr>
+          <tr><td>Rendl\u00edk</td><td>570g</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tips & Tricks Section -->
+  <div style="margin-top: 8px;">
+    <div class="section-header" onclick="toggleSection('tips')">
+      <h2>Tips &amp; Tricks</h2>
+      <span class="chevron" id="chev-tips">\u25BC</span>
+    </div>
+    <div class="section-body" id="section-tips">
+      <div class="section-content">
+        <h3>Odhad gram\u016f</h3>
+        <div class="tip-card"><div class="tip-label">10g o\u0159ech\u016f</div><div class="tip-value">= mal\u00e1 hrst</div></div>
+        <div class="tip-card"><div class="tip-label">60g chleba</div><div class="tip-value">= 1 pl\u00e1tek (2 cm)</div></div>
+        <div class="tip-card"><div class="tip-label">50g zeleniny</div><div class="tip-value">= p\u016flka v\u011bt\u0161\u00ed mrkve</div></div>
+        <div class="tip-card"><div class="tip-label">80g zeleniny</div><div class="tip-value">= 1/3 okurky</div></div>
+
+        <h3 style="margin-top:16px">Va\u0159en\u00ed</h3>
+        <ul>
+          <li>Sma\u017een\u00ed: \u0159epkov\u00fd olej (cca \u010dajov\u00e1 l\u017ei\u010dka)</li>
+          <li>Ko\u0159en\u00ed: pep\u0159, su\u0161en\u00e1 paprika \u2014 bez p\u0159idan\u00e9 soli</li>
+          <li>Solit minim\u00e1ln\u011b (s\u016fl zavod\u0148uje)</li>
+          <li>Uv\u00e1d\u011bn\u00e9 gram\u00e1\u017ee jsou v syrov\u00e9m stavu</li>
+          <li>P\u00e9ct v troub\u011b, na p\u00e1\u0159e nebo ve vod\u011b</li>
+        </ul>
+
+        <h3>Suplementace</h3>
+        <table class="recipe-table">
+          <tr><th></th><th>Filip</th><th>Naty</th></tr>
+          <tr><td>Kofein p\u0159ed tr\u00e9ninkem</td><td>200mg / 45 min</td><td>100mg / 45 min</td></tr>
+          <tr><td>Synefrin p\u0159ed tr\u00e9ninkem</td><td>20mg / 60 min</td><td>10mg / 60 min</td></tr>
+          <tr><td>Protein po tr\u00e9ninku</td><td>30g whey 80%</td><td>30g whey 80%</td></tr>
+          <tr><td>Citrulin + beta alanin</td><td colspan="2">5g + 5g</td></tr>
+        </table>
+
+        <h3 style="margin-top:16px">Pitn\u00fd re\u017eim</h3>
+        <div class="tip-card"><div class="tip-label">Filip</div><div class="tip-value">3,2 l vody denn\u011b + 0,5\u20131 l b\u011bhem tr\u00e9ninku</div></div>
+        <div class="tip-card"><div class="tip-label">Naty</div><div class="tip-value">2,5 l vody denn\u011b + 0,5 l b\u011bhem tr\u00e9ninku</div></div>
+        <p style="color:#888;font-size:12px;margin-top:8px;">Kofein dehydratuje \u2014 doplnit tekutiny nav\u00edc. Posledn\u00ed j\u00eddlo p\u0159ed tr\u00e9ninkem 1,5\u20132h.</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="height: 24px;"></div>
+
   <div class="summary-bar" id="summaryBar" style="display:none">
     <span>Done: <span class="done-count" id="doneCount">0</span></span>
     <span>Remaining: <span class="remaining" id="remainCount">0</span></span>
@@ -276,6 +474,20 @@
       document.getElementById('summaryBar').style.display = 'flex';
       document.getElementById('doneCount').textContent = totalDone;
       document.getElementById('remainCount').textContent = totalRemaining;
+    }
+
+    function toggleSection(name) {
+      const body = document.getElementById('section-' + name);
+      const chev = document.getElementById('chev-' + name);
+      body.classList.toggle('open');
+      chev.classList.toggle('open');
+    }
+
+    function showRecipe(type) {
+      document.getElementById('recipe-beef').style.display = type === 'beef' ? '' : 'none';
+      document.getElementById('recipe-chicken').style.display = type === 'chicken' ? '' : 'none';
+      document.getElementById('btn-beef').className = type === 'beef' ? 'active' : '';
+      document.getElementById('btn-chicken').className = type === 'chicken' ? 'active' : '';
     }
 
     loadMeals();
