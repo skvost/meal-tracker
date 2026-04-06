@@ -223,6 +223,61 @@
       color: #fff;
       font-size: 14px;
     }
+    .calc-row { margin-bottom: 12px; }
+    .calc-row label {
+      display: block;
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 6px;
+    }
+    .calc-input {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 2px solid #333;
+      background: #0f1a33;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 600;
+      -webkit-appearance: none;
+    }
+    .calc-input:focus {
+      outline: none;
+      border-color: #f0a500;
+    }
+    .calc-bowl-select { display: flex; gap: 8px; }
+    .calc-bowl {
+      flex: 1;
+      padding: 8px;
+      border-radius: 8px;
+      border: 2px solid #333;
+      background: transparent;
+      color: #888;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .calc-bowl.active {
+      border-color: #f0a500;
+      color: #f0a500;
+      background: #2a2510;
+    }
+    .calc-result {
+      background: #0f1a33;
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: 52px;
+    }
+    .calc-food-total { font-size: 14px; color: #888; }
+    .calc-per-portion {
+      font-size: 24px;
+      font-weight: 700;
+      color: #4ade80;
+    }
     .empty-state { text-align: center; padding: 60px 20px; color: #666; }
     .empty-state p { font-size: 16px; margin-top: 12px; }
     .summary-bar {
@@ -292,6 +347,63 @@
           <tr><td>R\u00fd\u017eovar vnit\u0159ek</td><td>180g</td></tr>
           <tr><td>Rendl\u00edk</td><td>570g</td></tr>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Portion Calculator Section -->
+  <div style="margin-top: 8px;">
+    <div class="section-header" onclick="toggleSection('calc')">
+      <h2>Kalkula&#269;ka porc&#237;</h2>
+      <span class="chevron" id="chev-calc">&#9660;</span>
+    </div>
+    <div class="section-body" id="section-calc">
+      <div class="section-content">
+        <div id="calc-naty" style="margin-bottom: 20px;">
+          <h3>Naty</h3>
+          <div class="calc-row">
+            <label>N&#225;doba</label>
+            <div class="calc-bowl-select">
+              <button class="calc-bowl active" onclick="selectBowl('naty', 570, this)">Nerez miska (570g)</button>
+              <button class="calc-bowl" onclick="selectBowl('naty', 652, this)">St&#345;&#237;brn&#253; hrnec (652g)</button>
+            </div>
+          </div>
+          <div class="calc-row">
+            <label>Celkov&#225; v&#225;ha (n&#225;doba + j&#237;dlo)</label>
+            <input type="number" id="total-naty" class="calc-input" placeholder="nap&#345;. 2100" oninput="calcPortion('naty')">
+          </div>
+          <div class="calc-row">
+            <label>Po&#269;et porc&#237;</label>
+            <input type="number" id="portions-naty" class="calc-input" value="7" oninput="calcPortion('naty')">
+          </div>
+          <div class="calc-result" id="result-naty">
+            <span class="calc-food-total"></span>
+            <span class="calc-per-portion"></span>
+          </div>
+        </div>
+
+        <div id="calc-filip">
+          <h3>Filip</h3>
+          <div class="calc-row">
+            <label>N&#225;doba</label>
+            <div class="calc-bowl-select">
+              <button class="calc-bowl active" onclick="selectBowl('filip', 570, this)">Nerez miska (570g)</button>
+              <button class="calc-bowl" onclick="selectBowl('filip', 652, this)">St&#345;&#237;brn&#253; hrnec (652g)</button>
+            </div>
+          </div>
+          <div class="calc-row">
+            <label>Celkov&#225; v&#225;ha (n&#225;doba + j&#237;dlo)</label>
+            <input type="number" id="total-filip" class="calc-input" placeholder="nap&#345;. 2800" oninput="calcPortion('filip')">
+          </div>
+          <div class="calc-row">
+            <label>Po&#269;et porc&#237;</label>
+            <input type="number" id="portions-filip" class="calc-input" value="7" oninput="calcPortion('filip')">
+          </div>
+          <div class="calc-result" id="result-filip">
+            <span class="calc-food-total"></span>
+            <span class="calc-per-portion"></span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -474,6 +586,36 @@
       document.getElementById('summaryBar').style.display = 'flex';
       document.getElementById('doneCount').textContent = totalDone;
       document.getElementById('remainCount').textContent = totalRemaining;
+    }
+
+    const bowlWeights = { naty: 570, filip: 570 };
+
+    function selectBowl(person, weight, btn) {
+      bowlWeights[person] = weight;
+      const btns = btn.parentElement.querySelectorAll('.calc-bowl');
+      btns.forEach(b => b.className = 'calc-bowl');
+      btn.className = 'calc-bowl active';
+      calcPortion(person);
+    }
+
+    function calcPortion(person) {
+      const totalInput = document.getElementById('total-' + person);
+      const portionsInput = document.getElementById('portions-' + person);
+      const result = document.getElementById('result-' + person);
+      const totalWeight = parseFloat(totalInput.value) || 0;
+      const portions = parseFloat(portionsInput.value) || 7;
+      const tare = bowlWeights[person];
+
+      if (totalWeight <= tare) {
+        result.querySelector('.calc-food-total').textContent = '';
+        result.querySelector('.calc-per-portion').textContent = '\u2014';
+        return;
+      }
+
+      const foodOnly = totalWeight - tare;
+      const perPortion = Math.round(foodOnly / portions);
+      result.querySelector('.calc-food-total').textContent = 'J\u00eddlo: ' + foodOnly + 'g';
+      result.querySelector('.calc-per-portion').textContent = perPortion + 'g / porce';
     }
 
     function toggleSection(name) {
