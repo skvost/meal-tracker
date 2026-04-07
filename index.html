@@ -318,10 +318,10 @@
         <div id="recipe-beef">
           <h3>Hov&#283;z&#237; mlet&#233; + t&#283;stoviny (7 porc&#237;)</h3>
           <table class="recipe-table">
-            <tr><th>Ingredience</th><th>Naty</th><th>Filip</th><th>Celkem</th></tr>
-            <tr><td>Hov&#283;z&#237; mlet&#233; 10%</td><td>150g</td><td>200g</td><td>2450g</td></tr>
-            <tr><td>T&#283;stoviny</td><td>50g</td><td>40g</td><td>630g</td></tr>
-            <tr><td>Ob&#283;d zelenina</td><td>80g</td><td>100g</td><td>1260g</td></tr>
+            <tr><th>Ingredience</th><th>Naty</th><th>Filip</th><th>N/t&#253;d</th><th>F/t&#253;d</th></tr>
+            <tr><td>Hov&#283;z&#237; mlet&#233; 10%</td><td>150g</td><td>200g</td><td>1050g</td><td>1400g</td></tr>
+            <tr><td>T&#283;stoviny</td><td>50g</td><td>40g</td><td>350g</td><td>280g</td></tr>
+            <tr><td>Ob&#283;d zelenina</td><td>80g</td><td>100g</td><td>560g</td><td>700g</td></tr>
           </table>
           <p style="color:#888;font-size:12px;">V&#225;hy jsou v syrov&#233;m stavu, na porci.</p>
         </div>
@@ -329,11 +329,11 @@
         <div id="recipe-chicken" style="display:none">
           <h3>Ku&#345;ec&#237; prsa + r&#253;&#382;e (7 porc&#237;)</h3>
           <table class="recipe-table">
-            <tr><th>Ingredience</th><th>Naty</th><th>Filip</th><th>Celkem</th></tr>
-            <tr><td>Ku&#345;ec&#237; prsa</td><td>105g</td><td>126g</td><td>1617g</td></tr>
-            <tr><td>R&#253;&#382;e</td><td>50g</td><td>60g</td><td>770g</td></tr>
-            <tr><td>Ob&#283;d zelenina</td><td>80g</td><td>100g</td><td>1260g</td></tr>
-            <tr><td>Jogurt</td><td>150g</td><td>150g</td><td>2100g</td></tr>
+            <tr><th>Ingredience</th><th>Naty</th><th>Filip</th><th>N/t&#253;d</th><th>F/t&#253;d</th></tr>
+            <tr><td>Ku&#345;ec&#237; prsa</td><td>105g</td><td>126g</td><td>735g</td><td>882g</td></tr>
+            <tr><td>R&#253;&#382;e</td><td>50g</td><td>60g</td><td>350g</td><td>420g</td></tr>
+            <tr><td>Ob&#283;d zelenina</td><td>80g</td><td>100g</td><td>560g</td><td>700g</td></tr>
+            <tr><td>Jogurt</td><td>150g</td><td>150g</td><td>1050g</td><td>1050g</td></tr>
           </table>
           <p style="color:#888;font-size:12px;">V&#225;hy jsou v syrov&#233;m stavu, na porci.</p>
         </div>
@@ -426,13 +426,15 @@
           <input type="number" id="priloha-total" class="calc-input" placeholder="nap&#345;. 1500" oninput="calcPriloha()">
         </div>
         <div style="display:flex;gap:12px;margin-top:4px">
-          <div class="calc-result" style="flex:1">
-            <span class="calc-food-total">Naty</span>
+          <div class="calc-result" style="flex:1;flex-direction:column;align-items:center">
+            <span style="color:#888;font-size:13px">Naty</span>
             <span class="calc-per-portion" id="priloha-naty">&#8212;</span>
+            <span style="color:#666;font-size:11px" id="priloha-naty-total"></span>
           </div>
-          <div class="calc-result" style="flex:1">
-            <span class="calc-food-total">Filip</span>
+          <div class="calc-result" style="flex:1;flex-direction:column;align-items:center">
+            <span style="color:#888;font-size:13px">Filip</span>
             <span class="calc-per-portion" id="priloha-filip">&#8212;</span>
+            <span style="color:#666;font-size:11px" id="priloha-filip-total"></span>
           </div>
         </div>
       </div>
@@ -676,8 +678,13 @@
         return;
       }
 
-      document.getElementById('priloha-naty').textContent = Math.round(total * d.naty / sum) + 'g';
-      document.getElementById('priloha-filip').textContent = Math.round(total * d.filip / sum) + 'g';
+      const natyTotal = Math.round(total * d.naty / sum);
+      const filipTotal = Math.round(total * d.filip / sum);
+      const portions = 7;
+      document.getElementById('priloha-naty').textContent = Math.round(natyTotal / portions) + 'g';
+      document.getElementById('priloha-filip').textContent = Math.round(filipTotal / portions) + 'g';
+      document.getElementById('priloha-naty-total').textContent = 'celkem ' + natyTotal + 'g';
+      document.getElementById('priloha-filip-total').textContent = 'celkem ' + filipTotal + 'g';
     }
 
     function toggleSection(name) {
