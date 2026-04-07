@@ -409,6 +409,37 @@
     </div>
   </div>
 
+  <!-- Příloha Ratio Calculator -->
+  <div style="margin-top: 8px;">
+    <div class="section-header" onclick="toggleSection('priloha')">
+      <h2>P&#345;&#237;loha &#8212; rozd&#283;len&#237;</h2>
+      <span class="chevron" id="chev-priloha">&#9660;</span>
+    </div>
+    <div class="section-body" id="section-priloha">
+      <div class="section-content">
+        <div class="recipe-toggle" style="margin-bottom:14px">
+          <button id="btn-priloha-beef" class="active" onclick="switchPriloha('beef')">T&#283;stoviny (hov&#283;z&#237;)</button>
+          <button id="btn-priloha-chicken" onclick="switchPriloha('chicken')">R&#253;&#382;e (ku&#345;ec&#237;)</button>
+        </div>
+        <p style="font-size:13px;color:#888;margin-bottom:12px" id="priloha-ratio-info">Pom&#283;r: Naty 350g : Filip 280g (surov&#233;)</p>
+        <div class="calc-row">
+          <label>Celkov&#225; v&#225;ha uva&#345;en&#233; p&#345;&#237;lohy (g)</label>
+          <input type="number" id="priloha-total" class="calc-input" placeholder="nap&#345;. 1500" oninput="calcPriloha()">
+        </div>
+        <div style="display:flex;gap:12px;margin-top:4px">
+          <div class="calc-result" style="flex:1">
+            <span class="calc-food-total">Naty</span>
+            <span class="calc-per-portion" id="priloha-naty">&#8212;</span>
+          </div>
+          <div class="calc-result" style="flex:1">
+            <span class="calc-food-total">Filip</span>
+            <span class="calc-per-portion" id="priloha-filip">&#8212;</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Tips & Tricks Section -->
   <div style="margin-top: 8px;">
     <div class="section-header" onclick="toggleSection('tips')">
@@ -617,6 +648,37 @@
       const perPortion = Math.round(foodOnly / portions);
       result.querySelector('.calc-food-total').textContent = 'J\u00eddlo: ' + foodOnly + 'g';
       result.querySelector('.calc-per-portion').textContent = perPortion + 'g / porce';
+    }
+
+    const prilohaData = {
+      beef: { name: 'T\u011bstoviny', naty: 350, filip: 280 },
+      chicken: { name: 'R\u00fd\u017ee', naty: 350, filip: 420 }
+    };
+    let currentPriloha = 'beef';
+
+    function switchPriloha(type) {
+      currentPriloha = type;
+      document.getElementById('btn-priloha-beef').className = type === 'beef' ? 'active' : '';
+      document.getElementById('btn-priloha-chicken').className = type === 'chicken' ? 'active' : '';
+      const d = prilohaData[type];
+      document.getElementById('priloha-ratio-info').textContent =
+        'Pom\u011br: Naty ' + d.naty + 'g : Filip ' + d.filip + 'g (surov\u00e9)';
+      calcPriloha();
+    }
+
+    function calcPriloha() {
+      const total = parseFloat(document.getElementById('priloha-total').value) || 0;
+      const d = prilohaData[currentPriloha];
+      const sum = d.naty + d.filip;
+
+      if (total <= 0) {
+        document.getElementById('priloha-naty').textContent = '\u2014';
+        document.getElementById('priloha-filip').textContent = '\u2014';
+        return;
+      }
+
+      document.getElementById('priloha-naty').textContent = Math.round(total * d.naty / sum) + 'g';
+      document.getElementById('priloha-filip').textContent = Math.round(total * d.filip / sum) + 'g';
     }
 
     function toggleSection(name) {
