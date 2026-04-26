@@ -315,25 +315,30 @@
           <button id="btn-chicken" onclick="showRecipe('chicken')">Ku&#345;ec&#237;</button>
         </div>
 
+        <div class="calc-row">
+          <label>Po&#269;et porc&#237; (na t&#253;den)</label>
+          <input type="number" id="recipe-portions" class="calc-input" value="7" oninput="updateRecipeTotals()">
+        </div>
+
         <div id="recipe-beef">
-          <h3>Hov&#283;z&#237; mlet&#233; + t&#283;stoviny (7 porc&#237;)</h3>
-          <table class="recipe-table">
-            <tr><th>Ingredience</th><th>Naty</th><th>Filip</th><th>N/t&#253;d</th><th>F/t&#253;d</th></tr>
-            <tr><td>Hov&#283;z&#237; mlet&#233; 10%</td><td>150g</td><td>200g</td><td>1050g</td><td>1400g</td></tr>
-            <tr><td>T&#283;stoviny</td><td>50g</td><td>40g</td><td>350g</td><td>280g</td></tr>
-            <tr><td>Ob&#283;d zelenina</td><td>80g</td><td>100g</td><td>560g</td><td>700g</td></tr>
+          <h3>Hov&#283;z&#237; mlet&#233; + t&#283;stoviny</h3>
+          <table class="recipe-table" id="recipe-beef-table">
+            <tr><th>Ingredience</th><th>Naty</th><th>Filip</th><th>N/t&#253;d</th><th>F/t&#253;d</th><th>Celkem</th></tr>
+            <tr data-naty="150" data-filip="200"><td>Hov&#283;z&#237; mlet&#233; 10%</td><td>150g</td><td>200g</td><td class="n-week">1050g</td><td class="f-week">1400g</td><td class="total-week">2450g</td></tr>
+            <tr data-naty="50" data-filip="40"><td>T&#283;stoviny</td><td>50g</td><td>40g</td><td class="n-week">350g</td><td class="f-week">280g</td><td class="total-week">630g</td></tr>
+            <tr data-naty="80" data-filip="100"><td>Ob&#283;d zelenina</td><td>80g</td><td>100g</td><td class="n-week">560g</td><td class="f-week">700g</td><td class="total-week">1260g</td></tr>
           </table>
           <p style="color:#888;font-size:12px;">V&#225;hy jsou v syrov&#233;m stavu, na porci.</p>
         </div>
 
         <div id="recipe-chicken" style="display:none">
-          <h3>Ku&#345;ec&#237; prsa + r&#253;&#382;e (7 porc&#237;)</h3>
-          <table class="recipe-table">
-            <tr><th>Ingredience</th><th>Naty</th><th>Filip</th><th>N/t&#253;d</th><th>F/t&#253;d</th></tr>
-            <tr><td>Ku&#345;ec&#237; prsa</td><td>105g</td><td>126g</td><td>735g</td><td>882g</td></tr>
-            <tr><td>R&#253;&#382;e</td><td>50g</td><td>60g</td><td>350g</td><td>420g</td></tr>
-            <tr><td>Ob&#283;d zelenina</td><td>80g</td><td>100g</td><td>560g</td><td>700g</td></tr>
-            <tr><td>Jogurt</td><td>150g</td><td>150g</td><td>1050g</td><td>1050g</td></tr>
+          <h3>Ku&#345;ec&#237; prsa + r&#253;&#382;e</h3>
+          <table class="recipe-table" id="recipe-chicken-table">
+            <tr><th>Ingredience</th><th>Naty</th><th>Filip</th><th>N/t&#253;d</th><th>F/t&#253;d</th><th>Celkem</th></tr>
+            <tr data-naty="105" data-filip="126"><td>Ku&#345;ec&#237; prsa</td><td>105g</td><td>126g</td><td class="n-week">735g</td><td class="f-week">882g</td><td class="total-week">1617g</td></tr>
+            <tr data-naty="50" data-filip="60"><td>R&#253;&#382;e</td><td>50g</td><td>60g</td><td class="n-week">350g</td><td class="f-week">420g</td><td class="total-week">770g</td></tr>
+            <tr data-naty="80" data-filip="100"><td>Ob&#283;d zelenina</td><td>80g</td><td>100g</td><td class="n-week">560g</td><td class="f-week">700g</td><td class="total-week">1260g</td></tr>
+            <tr data-naty="150" data-filip="150"><td>Jogurt</td><td>150g</td><td>150g</td><td class="n-week">1050g</td><td class="f-week">1050g</td><td class="total-week">2100g</td></tr>
           </table>
           <p style="color:#888;font-size:12px;">V&#225;hy jsou v syrov&#233;m stavu, na porci.</p>
         </div>
@@ -705,7 +710,27 @@
       document.getElementById('btn-chicken').className = type === 'chicken' ? 'active' : '';
     }
 
+    function updateRecipeTotals() {
+      const portionsInput = document.getElementById('recipe-portions');
+      const portions = parseFloat(portionsInput.value);
+      if (!portions || portions <= 0) return;
+      const tables = ['recipe-beef-table', 'recipe-chicken-table'];
+      for (const t of tables) {
+        const tbl = document.getElementById(t);
+        if (!tbl) continue;
+        const rows = tbl.querySelectorAll('tr[data-naty]');
+        rows.forEach(r => {
+          const n = parseFloat(r.dataset.naty);
+          const f = parseFloat(r.dataset.filip);
+          r.querySelector('.n-week').textContent = Math.round(n * portions) + 'g';
+          r.querySelector('.f-week').textContent = Math.round(f * portions) + 'g';
+          r.querySelector('.total-week').textContent = Math.round((n + f) * portions) + 'g';
+        });
+      }
+    }
+
     loadMeals();
+    updateRecipeTotals();
   </script>
 </body>
 </html>
