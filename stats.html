@@ -19,6 +19,7 @@
       --accent: #2e7d57;
       --accent-soft: #e3f1e8;
       --amber: #a15c07;
+      --amber-soft: #fcf1d6;
       --red: #b93a32;
       --seq-0: #ece8dd;
       --seq-1: #bfe0cc;
@@ -165,6 +166,7 @@
       border-radius: 4px 4px 0 0;
       min-height: 3px;
     }
+    .col.open .bar { background: var(--seq-2); }
     .col.untracked .bar {
       background: repeating-linear-gradient(135deg, #cfcabd 0 3px, var(--inset) 3px 6px);
     }
@@ -270,6 +272,17 @@
     .heat .cell.on { outline: 2px solid var(--ink); outline-offset: 0; }
     .heat .wk { font-size: 9px; color: var(--muted); text-align: center; white-space: nowrap; }
 
+    .notice {
+      background: var(--amber-soft);
+      border: 1px solid #f1e2b8;
+      border-radius: 14px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--ink-2);
+    }
+    .notice b { color: var(--ink); }
     .facts { list-style: none; }
     .facts li {
       font-size: 14px;
@@ -337,6 +350,9 @@
     ];
     // A week with almost nothing ticked was not tracked, not skipped.
     const TRACKED_MIN = 0.1;
+    // Closed weeks were reviewed at order time. Older weeks were often reset or left unfinished,
+    // so their counts are only a lower bound; switch to closed weeks once there are enough.
+    const RELIABLE_MIN = 3;
 
     function esc(s) {
       return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -346,7 +362,8 @@
     function shortDate(iso) { const p = iso.split('-').map(Number); return p[2] + '.' + p[1] + '.'; }
     function sum(arr, f) { return arr.reduce((a, x) => a + f(x), 0); }
 
-    function buildStats(rows) {
+    function buildStats(rows, closedWeeks) {
+      const closed = new Set(closedWeeks);
       rows = rows.filter(r => CATEGORIES.some(c => c.key === r.category)).map(r => {
         const total = Number(r.total);
         return {
@@ -363,34 +380,40 @@
       const weeks = weekKeys.map(w => {
         const rs = rows.filter(r => r.week === w);
         const planned = sum(rs, r => r.total), eaten = sum(rs, r => r.eaten);
-        return { week: w, planned, eaten, rate: planned ? eaten / planned : 0, tracked: planned > 0 && eaten / planned >= TRACKED_MIN };
+        const rate = planned ? eaten / planned : 0;
+        return { week: w, planned, eaten, rate, closed: closed.has(w), tracked: planned > 0 && (closed.has(w) || rate >= TRACKED_MIN) };
       });
       const tracked = weeks.filter(w => w.tracked);
       const trackedSet = new Set(tracked.map(w => w.week));
+      const closedTracked = tracked.filter(w => w.closed);
+      const reliable = closedTracked.length >= RELIABLE_MIN;
+      const basis = reliable ? closedTracked : tracked;
+      const basisSet = new Set(basis.map(w => w.week));
       const good = rows.filter(r => trackedSet.has(r.week));
+      const counted = good.filter(r => basisSet.has(r.week));
 
       const mealMap = new Map();
       for (const r of good) {
         const key = r.name + '|' + r.cover;
         if (!mealMap.has(key)) mealMap.set(key, { key, name: r.name, cover: r.cover, category: r.category, planned: 0, eaten: 0, byWeek: {} });
         const m = mealMap.get(key);
-        m.planned += r.total; m.eaten += r.eaten;
+        if (basisSet.has(r.week)) { m.planned += r.total; m.eaten += r.eaten; }
         const c = m.byWeek[r.week] || (m.byWeek[r.week] = { total: 0, eaten: 0 });
         c.total += r.total; c.eaten += r.eaten;
       }
       const meals = [...mealMap.values()].filter(m => m.planned >= 3);
-      meals.forEach(m => { m.rate = m.eaten / m.planned; m.weeks = Object.keys(m.byWeek).length; });
+      meals.forEach(m => { m.rate = m.eaten / m.planned; m.weeks = Object.keys(m.byWeek).filter(w => basisSet.has(w)).length; });
 
       const cats = CATEGORIES.map(c => {
-        const rs = good.filter(r => r.category === c.key);
+        const rs = counted.filter(r => r.category === c.key);
         const planned = sum(rs, r => r.total), eaten = sum(rs, r => r.eaten);
         return { key: c.key, label: c.label, planned, eaten, rate: planned ? eaten / planned : 0 };
       });
 
-      const planned = sum(tracked, w => w.planned), eaten = sum(tracked, w => w.eaten);
+      const planned = sum(basis, w => w.planned), eaten = sum(basis, w => w.eaten);
       const rateOf = ws => { const p = sum(ws, w => w.planned); return p ? sum(ws, w => w.eaten) / p : null; };
-      const recent = tracked.slice(-4), before = tracked.slice(-8, -4);
-      return { weeks, tracked, meals, cats, planned, eaten, rate: planned ? eaten / planned : 0,
+      const recent = basis.slice(-4), before = basis.slice(-8, -4);
+      return { weeks, tracked, basis, reliable, closedCount: closedTracked.length, meals, cats, planned, eaten, rate: planned ? eaten / planned : 0,
                recentRate: rateOf(recent), beforeRate: before.length >= 2 ? rateOf(before) : null };
     }
 
@@ -399,14 +422,15 @@
       const trendNote = delta == null ? ''
         : '<div class="note ' + (delta > 0 ? 'up' : delta < 0 ? 'down' : '') + '">' +
           (delta > 0 ? '▲ +' : delta < 0 ? '▼ −' : '● ') + Math.abs(delta) + ' p. b. proti 4 týdnům předtím</div>';
-      const skipped = s.tracked.length ? (s.planned - s.eaten) / s.tracked.length : 0;
+      const skipped = s.basis.length ? (s.planned - s.eaten) / s.basis.length : 0;
+      const lo = s.reliable ? '' : '<small>≥ </small>', hi = s.reliable ? '' : '<small>≤ </small>';
       return '<div class="tiles">' +
-        '<div class="tile"><div class="label">Průměrné plnění</div><div class="value">' + pct(s.eaten, s.planned) + '<small> %</small></div>' +
+        '<div class="tile"><div class="label">Průměrné plnění</div><div class="value">' + lo + pct(s.eaten, s.planned) + '<small> %</small></div>' +
           '<div class="note">' + num(s.eaten) + ' z ' + s.planned + ' jídel</div></div>' +
-        '<div class="tile"><div class="label">Poslední 4 týdny</div><div class="value">' + Math.round(100 * (s.recentRate || 0)) + '<small> %</small></div>' + trendNote + '</div>' +
-        '<div class="tile"><div class="label">Sledované týdny</div><div class="value">' + s.tracked.length + '<small> z ' + s.weeks.length + '</small></div>' +
-          '<div class="note">ostatní nebyly vyplněné</div></div>' +
-        '<div class="tile"><div class="label">Nesnědeno za týden</div><div class="value">' + num(skipped) + '</div>' +
+        '<div class="tile"><div class="label">Poslední 4 týdny</div><div class="value">' + lo + Math.round(100 * (s.recentRate || 0)) + '<small> %</small></div>' + trendNote + '</div>' +
+        '<div class="tile"><div class="label">' + (s.reliable ? 'Uzavřené týdny' : 'Sledované týdny') + '</div><div class="value">' + s.basis.length + '<small> z ' + s.weeks.length + '</small></div>' +
+          '<div class="note">' + (s.reliable ? 'počítá se jen z nich' : 'ostatní nebyly vyplněné') + '</div></div>' +
+        '<div class="tile"><div class="label">Nesnědeno za týden</div><div class="value">' + hi + num(skipped) + '</div>' +
           '<div class="note">jídel v průměru zbyde</div></div>' +
       '</div>';
     }
@@ -421,8 +445,8 @@
         const h = Math.round(100 * w.rate);
         const label = (w === best || w === last) && w.tracked ? '<div class="top" style="bottom:calc(' + h + '% + 3px)">' + h + '%</div>' : '';
         const tip = '<b>Týden od ' + shortDate(w.week) + '</b>' +
-          (w.tracked ? h + ' % · ' + num(w.eaten) + ' z ' + w.planned + ' jídel' : 'Nevyplněno (' + num(w.eaten) + ' z ' + w.planned + ')');
-        cols += '<div class="col' + (w.tracked ? '' : ' untracked') + '" data-tip="' + esc(tip) + '"><div class="bar" style="height:' + (w.tracked ? h : 4) + '%"></div>' + label + '</div>';
+          (w.tracked ? h + ' % · ' + num(w.eaten) + ' z ' + w.planned + ' jídel' + (w.closed ? '' : ' · neuzavřený, spodní odhad') : 'Nevyplněno (' + num(w.eaten) + ' z ' + w.planned + ')');
+        cols += '<div class="col' + (!w.tracked ? ' untracked' : w.closed ? '' : ' open') + '" data-tip="' + esc(tip) + '"><div class="bar" style="height:' + (w.tracked ? h : 4) + '%"></div>' + label + '</div>';
       });
       const step = s.weeks.length > 8 ? 2 : 1;
       const ticks = s.weeks.map((w, i) => '<span>' + ((s.weeks.length - 1 - i) % step === 0 ? shortDate(w.week) : '') + '</span>').join('');
@@ -431,13 +455,14 @@
       return '<div class="card"><h2>Plnění po týdnech</h2>' +
         '<div class="sub">Kolik z naplánovaných snídaní, svačin a večeří jste odškrtli.</div>' +
         '<div class="cols">' + cols + '</div><div class="ticks">' + ticks + '</div>' +
-        '<div class="legend"><span><i class="dash"></i>průměr ' + Math.round(100 * s.rate) + ' %</span><span><i class="hatch"></i>nevyplněný týden</span></div>' +
+        '<div class="legend"><span><i class="dash"></i>průměr ' + Math.round(100 * s.rate) + ' %</span><span><i style="background:var(--accent)"></i>uzavřený týden</span>' +
+        '<span><i style="background:var(--seq-2)"></i>neuzavřený (spodní odhad)</span><span><i class="hatch"></i>nevyplněný</span></div>' +
         '<details><summary>Tabulka</summary><table class="data"><tr><th>Týden od</th><th>Plán</th><th>Snědeno</th><th>Plnění</th></tr>' + table + '</table></details>' +
       '</div>';
     }
 
     function ranking(s) {
-      let html = '<div class="card"><h2>Která jídla opravdu jíte</h2><div class="sub">Podíl snědených ze všech naplánovaných, seřazeno od nejspolehlivějších.</div>';
+      let html = '<div class="card"><h2>Která jídla opravdu jíte</h2><div class="sub">Podíl snědených ze všech naplánovaných, seřazeno od nejspolehlivějších.' + (s.reliable ? '' : ' Pořadí sedí, i když jsou procenta podhodnocená.') + '</div>';
       const sorted = s.meals.slice().sort((a, b) => b.rate - a.rate || b.planned - a.planned);
       for (const m of sorted) {
         const p = Math.round(100 * m.rate);
@@ -500,7 +525,7 @@
       if (solid.length) {
         const top = solid.reduce((a, m) => m.rate > a.rate ? m : a);
         const low = solid.reduce((a, m) => m.rate < a.rate ? m : a);
-        items.push('Nejspolehlivější jídlo je <b>' + esc(top.cover) + '</b> (' + esc(top.name) + '): sníte ho v ' + Math.round(100 * top.rate) + ' % případů.');
+        items.push('Nejspolehlivější jídlo je <b>' + esc(top.cover) + '</b> (' + esc(top.name) + '): odškrtnuté v ' + Math.round(100 * top.rate) + ' % případů.');
         items.push('Nejčastěji vynecháváte <b>' + esc(low.cover) + '</b> (' + esc(low.name) + '): jen ' + num(low.eaten) + ' z ' + low.planned + ' naplánovaných.');
         const never = solid.filter(m => m.eaten === 0 && m !== low);
         if (never.length) items.push('Ani jednou jste neodškrtli: <b>' + never.map(m => esc(m.name) + ' · ' + esc(m.cover)).join('</b>, <b>') + '</b>.');
@@ -520,7 +545,7 @@
         const longest = days[days.length - 1];
         items.push('Nový týden zakládáte obvykle po <b>' + median + ' dnech</b>; nejdelší pauza byla ' + longest + ' dní.');
       }
-      return '<div class="card"><h2>Zajímavosti</h2><div class="sub">Spočítáno jen ze sledovaných týdnů.</div><ul class="facts"><li>' + items.join('</li><li>') + '</li></ul></div>';
+      return '<div class="card"><h2>Zajímavosti</h2><div class="sub">' + (s.reliable ? 'Spočítáno jen z uzavřených týdnů.' : 'Spočítáno ze sledovaných týdnů, tedy spodní odhad.') + '</div><ul class="facts"><li>' + items.join('</li><li>') + '</li></ul></div>';
     }
 
     function wireTooltips() {
@@ -553,13 +578,17 @@
       try {
         const { data, error } = await db.from('weekly_meals').select('week_start,category,meal_name,cover_name,total,count').order('week_start').order('id');
         if (error) throw error;
-        const s = buildStats(data || []);
+        const status = await db.from('week_status').select('week_start');
+        if (status.error) throw status.error;
+        const s = buildStats(data || [], status.data.map(r => r.week_start));
         if (!s.tracked.length) {
           app.innerHTML = '<div class="loading">Zatím tu nejsou žádná data.</div>';
           return;
         }
-        app.innerHTML = tiles(s) + weeklyChart(s) + ranking(s) + categories(s) + heatmap(s) + facts(s) +
-          '<p class="foot">Jedno jídlo = jeden den pro oba; půlka znamená, že jedl jen jeden z vás. Týdny s plněním pod 10 % se berou jako nevyplněné a do průměrů se nepočítají.</p>';
+        const notice = s.reliable ? '' : '<div class="notice"><b>Čísla jsou spodní odhad.</b> Starší týdny se neuzavíraly: tabulka se někdy vynulovala nebo se v neděli nedoklikala, takže jste ve skutečnosti snědli víc. ' +
+          'Od teď každý týden uzavře /meal-prep a jakmile budou uzavřené ' + RELIABLE_MIN + ' (zatím ' + s.closedCount + '), statistiky se začnou počítat jen z nich.</div>';
+        app.innerHTML = notice + tiles(s) + weeklyChart(s) + ranking(s) + categories(s) + heatmap(s) + facts(s) +
+          '<p class="foot">Jedno jídlo = jeden den pro oba; půlka znamená, že jedl jen jeden z vás. Neuzavřené týdny s plněním pod 10 % se berou jako nevyplněné a do průměrů se nepočítají.</p>';
         wireTooltips();
       } catch (err) {
         app.innerHTML = '<div class="error">Chyba: ' + esc(err.message) + '</div>';
