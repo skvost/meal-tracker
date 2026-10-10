@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#f6f3ec">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>Meal Tracker – Statistiky</title>
+  <style>
+    :root {
+      --bg: #f6f3ec;
+      --surface: #ffffff;
+      --inset: #f3efe6;
+      --line: #e4dfd3;
+      --ink: #1d2621;
+      --ink-2: #4f5952;
+      --muted: #6b7268;
+      --accent: #2e7d57;
+      --accent-soft: #e3f1e8;
+      --amber: #a15c07;
+      --red: #b93a32;
+      --seq-0: #ece8dd;
+      --seq-1: #bfe0cc;
+      --seq-2: #74b892;
+      --seq-3: #2e7d57;
+      --round: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--ink-2);
+      min-height: 100vh;
+      padding: 16px;
+      padding-bottom: 40px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-family: var(--round);
+      text-align: center;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      margin-bottom: 12px;
+      color: var(--ink);
+    }
+    h1 .dot { color: var(--accent); }
+    .nav {
+      display: flex;
+      gap: 4px;
+      background: var(--inset);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 16px;
+    }
+    .nav a {
+      flex: 1;
+      text-align: center;
+      padding: 9px;
+      border-radius: 9px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .nav a.active {
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: 0 1px 2px rgba(29, 38, 33, 0.08);
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .card h2 {
+      font-family: var(--round);
+      font-size: 17px;
+      color: var(--ink);
+      margin-bottom: 2px;
+    }
+    .card .sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 14px;
+      line-height: 1.4;
+    }
+    .tiles {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .tile {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+    .tile .label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .tile .value {
+      font-family: var(--round);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+    }
+    .tile .value small { font-size: 15px; font-weight: 600; color: var(--muted); }
+    .tile .note { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .tile .note.up { color: var(--accent); }
+    .tile .note.down { color: var(--red); }
+
+    /* weekly column chart */
+    .cols {
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 150px;
+      margin-left: 30px;
+      border-bottom: 1px solid var(--line);
+    }
+    .cols .grid {
+      position: absolute;
+      left: 0; right: 0;
+      border-top: 1px solid var(--inset);
+      pointer-events: none;
+    }
+    .cols .grid span {
+      position: absolute;
+      left: -30px;
+      top: -7px;
+      width: 24px;
+      text-align: right;
+      font-size: 10px;
+      color: var(--muted);
+    }
+    .cols .avg {
+      position: absolute;
+      left: 0; right: 0;
+      border-top: 1.5px dashed var(--ink-2);
+      opacity: 0.45;
+      pointer-events: none;
+    }
+    .col {
+      position: relative;
+      flex: 1;
+      height: 100%;
+      display: flex;
+      align-items: flex-end;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .col .bar {
+      width: 100%;
+      max-width: 28px;
+      margin: 0 auto;
+      background: var(--accent);
+      border-radius: 4px 4px 0 0;
+      min-height: 3px;
+    }
+    .col.untracked .bar {
+      background: repeating-linear-gradient(135deg, #cfcabd 0 3px, var(--inset) 3px 6px);
+    }
+    .col:hover .bar, .col.on .bar { filter: brightness(0.88); }
+    .col .top {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--ink);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .ticks {
+      display: flex;
+      gap: 3px;
+      margin: 4px 0 0 30px;
+    }
+    .ticks span {
+      flex: 1;
+      text-align: center;
+      font-size: 10px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: visible;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 14px;
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .legend i {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border-radius: 3px;
+      vertical-align: -2px;
+      margin-right: 5px;
+    }
+    .legend i.dash {
+      width: 16px; height: 0;
+      border-top: 1.5px dashed var(--ink-2);
+      opacity: 0.45;
+      border-radius: 0;
+      vertical-align: 3px;
+    }
+    .legend i.hatch { background: repeating-linear-gradient(135deg, #cfcabd 0 3px, var(--inset) 3px 6px); }
+    .legend i.none { background: transparent; border: 1px dashed #cfcabd; }
+
+    /* ranked bars */
+    .rank-row {
+      display: grid;
+      grid-template-columns: minmax(96px, 38%) 1fr 62px;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .rank-row .name { font-size: 13px; color: var(--ink); line-height: 1.25; }
+    .rank-row .name small { display: block; font-size: 11px; color: var(--muted); }
+    .rank-row .track { height: 12px; background: var(--inset); border-radius: 0 4px 4px 0; }
+    .rank-row .fill { height: 100%; background: var(--accent); border-radius: 0 4px 4px 0; min-width: 2px; }
+    .rank-row:hover .fill, .rank-row.on .fill { filter: brightness(0.88); }
+    .rank-row .val {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    .rank-row .val small { display: block; font-weight: 400; color: var(--muted); font-size: 11px; }
+    .group-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      margin: 12px 0 2px;
+    }
+    .group-label:first-of-type { margin-top: 0; }
+
+    /* heatmap */
+    .heat { display: grid; gap: 2px; align-items: center; }
+    .heat .hname {
+      font-size: 11px;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding-right: 6px;
+    }
+    .heat .cell {
+      aspect-ratio: 1;
+      border-radius: 3px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .heat .cell.none { border: 1px dashed #ddd8cb; cursor: default; }
+    .heat .cell.on { outline: 2px solid var(--ink); outline-offset: 0; }
+    .heat .wk { font-size: 9px; color: var(--muted); text-align: center; white-space: nowrap; }
+
+    .facts { list-style: none; }
+    .facts li {
+      font-size: 14px;
+      line-height: 1.45;
+      color: var(--ink-2);
+      padding: 10px 0;
+      border-bottom: 1px solid var(--inset);
+    }
+    .facts li:last-child { border-bottom: none; padding-bottom: 0; }
+    .facts li:first-child { padding-top: 0; }
+    .facts b { color: var(--ink); }
+
+    details { margin-top: 12px; }
+    summary { font-size: 13px; color: var(--accent); font-weight: 600; cursor: pointer; }
+    table.data { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+    table.data th {
+      text-align: right; font-size: 11px; font-weight: 600; color: var(--muted);
+      padding: 4px 6px; border-bottom: 1px solid var(--line);
+    }
+    table.data td { text-align: right; padding: 4px 6px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+    table.data th:first-child, table.data td:first-child { text-align: left; color: var(--ink); }
+
+    #tip {
+      position: fixed;
+      z-index: 10;
+      pointer-events: none;
+      background: var(--ink);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.4;
+      padding: 7px 10px;
+      border-radius: 8px;
+      max-width: 220px;
+      display: none;
+      box-shadow: 0 4px 14px rgba(29, 38, 33, 0.18);
+    }
+    #tip b { display: block; font-size: 12px; margin-bottom: 1px; }
+    #tip span { opacity: 0.8; }
+    .foot { font-size: 12px; color: var(--muted); line-height: 1.5; margin-top: 4px; padding: 0 4px; }
+    .loading { text-align: center; padding: 60px; color: var(--muted); font-size: 16px; }
+    .error { text-align: center; padding: 40px; color: var(--red); font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>Meal Tracker<span class="dot">.</span></h1>
+  <nav class="nav">
+    <a href="./">T&#253;den</a>
+    <a href="stats.html" class="active">Statistiky</a>
+  </nav>
+  <div id="app"><div class="loading">Na&#269;&#237;t&#225;m&#8230;</div></div>
+  <div id="tip"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+    const { createClient } = supabase;
+    const db = createClient(
+      'https://wooencmwsjoaguyhmsan.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indvb2VuY213c2pvYWd1eWhtc2FuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NzA3NTYsImV4cCI6MjA5MTA0Njc1Nn0.TmBQoQTgtzgyqBKSzDQ7RrlTXlXCyT9Qu7F_jmWmSMQ'
+    );
+
+    const CATEGORIES = [
+      { key: 'snidane', label: 'Snídaně' },
+      { key: 'svaciny', label: 'Svačiny' },
+      { key: 'vecere', label: 'Večeře' }
+    ];
+    // A week with almost nothing ticked was not tracked, not skipped.
+    const TRACKED_MIN = 0.1;
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function pct(a, b) { return b > 0 ? Math.round(100 * a / b) : 0; }
+    function num(n) { return (Math.round(n * 10) / 10).toString().replace('.', ','); }
+    function shortDate(iso) { const p = iso.split('-').map(Number); return p[2] + '.' + p[1] + '.'; }
+    function sum(arr, f) { return arr.reduce((a, x) => a + f(x), 0); }
+
+    function buildStats(rows) {
+      rows = rows.filter(r => CATEGORIES.some(c => c.key === r.category)).map(r => {
+        const total = Number(r.total);
+        return {
+          week: r.week_start,
+          category: r.category,
+          name: r.meal_name.replace('Svičina', 'Svačina'),
+          cover: r.cover_name.replace(/\s*\(.*\)\s*$/, '').trim(),
+          total: total,
+          eaten: Math.min(Number(r.count), total)
+        };
+      });
+
+      const weekKeys = [...new Set(rows.map(r => r.week))].sort();
+      const weeks = weekKeys.map(w => {
+        const rs = rows.filter(r => r.week === w);
+        const planned = sum(rs, r => r.total), eaten = sum(rs, r => r.eaten);
+        return { week: w, planned, eaten, rate: planned ? eaten / planned : 0, tracked: planned > 0 && eaten / planned >= TRACKED_MIN };
+      });
+      const tracked = weeks.filter(w => w.tracked);
+      const trackedSet = new Set(tracked.map(w => w.week));
+      const good = rows.filter(r => trackedSet.has(r.week));
+
+      const mealMap = new Map();
+      for (const r of good) {
+        const key = r.name + '|' + r.cover;
+        if (!mealMap.has(key)) mealMap.set(key, { key, name: r.name, cover: r.cover, category: r.category, planned: 0, eaten: 0, byWeek: {} });
+        const m = mealMap.get(key);
+        m.planned += r.total; m.eaten += r.eaten;
+        const c = m.byWeek[r.week] || (m.byWeek[r.week] = { total: 0, eaten: 0 });
+        c.total += r.total; c.eaten += r.eaten;
+      }
+      const meals = [...mealMap.values()].filter(m => m.planned >= 3);
+      meals.forEach(m => { m.rate = m.eaten / m.planned; m.weeks = Object.keys(m.byWeek).length; });
+
+      const cats = CATEGORIES.map(c => {
+        const rs = good.filter(r => r.category === c.key);
+        const planned = sum(rs, r => r.total), eaten = sum(rs, r => r.eaten);
+        return { key: c.key, label: c.label, planned, eaten, rate: planned ? eaten / planned : 0 };
+      });
+
+      const planned = sum(tracked, w => w.planned), eaten = sum(tracked, w => w.eaten);
+      const rateOf = ws => { const p = sum(ws, w => w.planned); return p ? sum(ws, w => w.eaten) / p : null; };
+      const recent = tracked.slice(-4), before = tracked.slice(-8, -4);
+      return { weeks, tracked, meals, cats, planned, eaten, rate: planned ? eaten / planned : 0,
+               recentRate: rateOf(recent), beforeRate: before.length >= 2 ? rateOf(before) : null };
+    }
+
+    function tiles(s) {
+      const delta = s.beforeRate == null ? null : Math.round(100 * (s.recentRate - s.beforeRate));
+      const trendNote = delta == null ? ''
+        : '<div class="note ' + (delta > 0 ? 'up' : delta < 0 ? 'down' : '') + '">' +
+          (delta > 0 ? '▲ +' : delta < 0 ? '▼ −' : '● ') + Math.abs(delta) + ' p. b. proti 4 týdnům předtím</div>';
+      const skipped = s.tracked.length ? (s.planned - s.eaten) / s.tracked.length : 0;
+      return '<div class="tiles">' +
+        '<div class="tile"><div class="label">Průměrné plnění</div><div class="value">' + pct(s.eaten, s.planned) + '<small> %</small></div>' +
+          '<div class="note">' + num(s.eaten) + ' z ' + s.planned + ' jídel</div></div>' +
+        '<div class="tile"><div class="label">Poslední 4 týdny</div><div class="value">' + Math.round(100 * (s.recentRate || 0)) + '<small> %</small></div>' + trendNote + '</div>' +
+        '<div class="tile"><div class="label">Sledované týdny</div><div class="value">' + s.tracked.length + '<small> z ' + s.weeks.length + '</small></div>' +
+          '<div class="note">ostatní nebyly vyplněné</div></div>' +
+        '<div class="tile"><div class="label">Nesnědeno za týden</div><div class="value">' + num(skipped) + '</div>' +
+          '<div class="note">jídel v průměru zbyde</div></div>' +
+      '</div>';
+    }
+
+    function weeklyChart(s) {
+      const best = s.tracked.reduce((a, w) => (!a || w.rate > a.rate) ? w : a, null);
+      const last = s.weeks[s.weeks.length - 1];
+      let cols = '';
+      [0, 50, 100].forEach(g => { cols += '<div class="grid" style="bottom:' + g + '%"><span>' + g + '%</span></div>'; });
+      cols += '<div class="avg" style="bottom:' + (100 * s.rate) + '%"></div>';
+      s.weeks.forEach(w => {
+        const h = Math.round(100 * w.rate);
+        const label = (w === best || w === last) && w.tracked ? '<div class="top" style="bottom:calc(' + h + '% + 3px)">' + h + '%</div>' : '';
+        const tip = '<b>Týden od ' + shortDate(w.week) + '</b>' +
+          (w.tracked ? h + ' % · ' + num(w.eaten) + ' z ' + w.planned + ' jídel' : 'Nevyplněno (' + num(w.eaten) + ' z ' + w.planned + ')');
+        cols += '<div class="col' + (w.tracked ? '' : ' untracked') + '" data-tip="' + esc(tip) + '"><div class="bar" style="height:' + (w.tracked ? h : 4) + '%"></div>' + label + '</div>';
+      });
+      const step = s.weeks.length > 8 ? 2 : 1;
+      const ticks = s.weeks.map((w, i) => '<span>' + ((s.weeks.length - 1 - i) % step === 0 ? shortDate(w.week) : '') + '</span>').join('');
+      const table = s.weeks.map(w => '<tr><td>' + shortDate(w.week) + '</td><td>' + w.planned + '</td><td>' + num(w.eaten) + '</td><td>' +
+        (w.tracked ? Math.round(100 * w.rate) + ' %' : '—') + '</td></tr>').join('');
+      return '<div class="card"><h2>Plnění po týdnech</h2>' +
+        '<div class="sub">Kolik z naplánovaných snídaní, svačin a večeří jste odškrtli.</div>' +
+        '<div class="cols">' + cols + '</div><div class="ticks">' + ticks + '</div>' +
+        '<div class="legend"><span><i class="dash"></i>průměr ' + Math.round(100 * s.rate) + ' %</span><span><i class="hatch"></i>nevyplněný týden</span></div>' +
+        '<details><summary>Tabulka</summary><table class="data"><tr><th>Týden od</th><th>Plán</th><th>Snědeno</th><th>Plnění</th></tr>' + table + '</table></details>' +
+      '</div>';
+    }
+
+    function ranking(s) {
+      let html = '<div class="card"><h2>Která jídla opravdu jíte</h2><div class="sub">Podíl snědených ze všech naplánovaných, seřazeno od nejspolehlivějších.</div>';
+      const sorted = s.meals.slice().sort((a, b) => b.rate - a.rate || b.planned - a.planned);
+      for (const m of sorted) {
+        const p = Math.round(100 * m.rate);
+        const tip = '<b>' + esc(m.name) + ' · ' + esc(m.cover) + '</b>' + num(m.eaten) + ' z ' + m.planned + ' jídel · ' + m.weeks + ' týdnů';
+        html += '<div class="rank-row" data-tip="' + esc(tip) + '">' +
+          '<div class="name">' + esc(m.cover) + '<small>' + esc(m.name) + '</small></div>' +
+          '<div class="track"><div class="fill" style="width:' + p + '%"></div></div>' +
+          '<div class="val">' + p + ' % <small>' + num(m.eaten) + '/' + m.planned + '</small></div></div>';
+      }
+      return html + '</div>';
+    }
+
+    function categories(s) {
+      let html = '<div class="card"><h2>Podle části dne</h2><div class="sub">Oběd se vaří dopředu a neodškrtává se, proto tu chybí.</div>';
+      for (const c of s.cats) {
+        const p = Math.round(100 * c.rate);
+        const tip = '<b>' + c.label + '</b>' + num(c.eaten) + ' z ' + c.planned + ' jídel';
+        html += '<div class="rank-row" data-tip="' + esc(tip) + '">' +
+          '<div class="name">' + c.label + '</div>' +
+          '<div class="track"><div class="fill" style="width:' + p + '%"></div></div>' +
+          '<div class="val">' + p + ' %</div></div>';
+      }
+      return html + '</div>';
+    }
+
+    function seqColor(rate) {
+      if (rate <= 0) return 'var(--seq-0)';
+      if (rate < 0.5) return 'var(--seq-1)';
+      if (rate < 1) return 'var(--seq-2)';
+      return 'var(--seq-3)';
+    }
+
+    function heatmap(s) {
+      const weeks = s.tracked;
+      const order = { snidane: 0, svaciny: 1, vecere: 2 };
+      const meals = s.meals.slice().sort((a, b) => order[a.category] - order[b.category] || a.name.localeCompare(b.name, 'cs') || a.cover.localeCompare(b.cover, 'cs'));
+      let html = '<div class="card"><h2>Jídla v čase</h2><div class="sub">Každý čtvereček je jedno jídlo v jednom týdnu. Čím tmavší, tím víc se ho snědlo.</div>';
+      html += '<div class="heat" style="grid-template-columns:minmax(84px,32%) repeat(' + weeks.length + ',1fr)">';
+      for (const m of meals) {
+        html += '<div class="hname">' + esc(m.name.replace('Snídaně', 'Sn.').replace('Svačina', 'Sv.').replace('Večeře', 'Več.')) + ' · ' + esc(m.cover) + '</div>';
+        for (const w of weeks) {
+          const c = m.byWeek[w.week];
+          if (!c) { html += '<div class="cell none"></div>'; continue; }
+          const tip = '<b>' + esc(m.name) + ' · ' + esc(m.cover) + '</b>Týden od ' + shortDate(w.week) + ': ' + num(c.eaten) + ' z ' + c.total;
+          html += '<div class="cell" style="background:' + seqColor(c.eaten / c.total) + '" data-tip="' + esc(tip) + '"></div>';
+        }
+      }
+      html += '<div></div>';
+      weeks.forEach((w, i) => { html += '<div class="wk">' + (i === 0 || i === weeks.length - 1 ? shortDate(w.week) : '') + '</div>'; });
+      html += '</div><div class="legend">' +
+        '<span><i style="background:var(--seq-0)"></i>nic</span><span><i style="background:var(--seq-1)"></i>méně než půl</span>' +
+        '<span><i style="background:var(--seq-2)"></i>většina</span><span><i style="background:var(--seq-3)"></i>všechno</span>' +
+        '<span><i class="none"></i>neplánováno</span></div></div>';
+      return html;
+    }
+
+    function facts(s) {
+      const items = [];
+      const solid = s.meals.filter(m => m.planned >= 5);
+      if (solid.length) {
+        const top = solid.reduce((a, m) => m.rate > a.rate ? m : a);
+        const low = solid.reduce((a, m) => m.rate < a.rate ? m : a);
+        items.push('Nejspolehlivější jídlo je <b>' + esc(top.cover) + '</b> (' + esc(top.name) + '): sníte ho v ' + Math.round(100 * top.rate) + ' % případů.');
+        items.push('Nejčastěji vynecháváte <b>' + esc(low.cover) + '</b> (' + esc(low.name) + '): jen ' + num(low.eaten) + ' z ' + low.planned + ' naplánovaných.');
+        const never = solid.filter(m => m.eaten === 0 && m !== low);
+        if (never.length) items.push('Ani jednou jste neodškrtli: <b>' + never.map(m => esc(m.name) + ' · ' + esc(m.cover)).join('</b>, <b>') + '</b>.');
+      }
+      const cs = s.cats.filter(c => c.planned > 0).slice().sort((a, b) => b.rate - a.rate);
+      if (cs.length > 1) {
+        const a = cs[0], b = cs[cs.length - 1];
+        items.push('<b>' + a.label + '</b> držíte nejlíp (' + Math.round(100 * a.rate) + ' %), <b>' + b.label.toLowerCase() + '</b> nejhůř (' + Math.round(100 * b.rate) + ' %).');
+      }
+      if (s.tracked.length) {
+        const best = s.tracked.reduce((a, w) => w.rate > a.rate ? w : a);
+        items.push('Nejlepší byl týden od <b>' + shortDate(best.week) + '</b> s plněním ' + Math.round(100 * best.rate) + ' %.');
+      }
+      if (s.weeks.length > 2) {
+        const days = s.weeks.slice(1).map((w, i) => (new Date(w.week) - new Date(s.weeks[i].week)) / 864e5).sort((a, b) => a - b);
+        const median = days[Math.floor(days.length / 2)];
+        const longest = days[days.length - 1];
+        items.push('Nový týden zakládáte obvykle po <b>' + median + ' dnech</b>; nejdelší pauza byla ' + longest + ' dní.');
+      }
+      return '<div class="card"><h2>Zajímavosti</h2><div class="sub">Spočítáno jen ze sledovaných týdnů.</div><ul class="facts"><li>' + items.join('</li><li>') + '</li></ul></div>';
+    }
+
+    function wireTooltips() {
+      const tip = document.getElementById('tip');
+      let active = null;
+      function hide() { tip.style.display = 'none'; if (active) active.classList.remove('on'); active = null; }
+      function show(el, x, y) {
+        if (active && active !== el) active.classList.remove('on');
+        active = el; el.classList.add('on');
+        tip.innerHTML = el.dataset.tip.replace(/<\/b>/, '</b><span>') + '</span>';
+        tip.style.display = 'block';
+        const r = tip.getBoundingClientRect();
+        tip.style.left = Math.max(8, Math.min(window.innerWidth - r.width - 8, x - r.width / 2)) + 'px';
+        tip.style.top = (y - r.height - 12 < 8 ? y + 16 : y - r.height - 12) + 'px';
+      }
+      document.addEventListener('pointermove', e => {
+        if (e.pointerType === 'touch') return;
+        const el = e.target.closest('[data-tip]');
+        if (el) show(el, e.clientX, e.clientY); else hide();
+      });
+      document.addEventListener('click', e => {
+        const el = e.target.closest('[data-tip]');
+        if (el && el !== active) show(el, e.clientX, e.clientY); else hide();
+      });
+      window.addEventListener('scroll', hide, { passive: true });
+    }
+
+    async function load() {
+      const app = document.getElementById('app');
+      try {
+        const { data, error } = await db.from('weekly_meals').select('week_start,category,meal_name,cover_name,total,count').order('week_start').order('id');
+        if (error) throw error;
+        const s = buildStats(data || []);
+        if (!s.tracked.length) {
+          app.innerHTML = '<div class="loading">Zatím tu nejsou žádná data.</div>';
+          return;
+        }
+        app.innerHTML = tiles(s) + weeklyChart(s) + ranking(s) + categories(s) + heatmap(s) + facts(s) +
+          '<p class="foot">Jedno jídlo = jeden den pro oba; půlka znamená, že jedl jen jeden z vás. Týdny s plněním pod 10 % se berou jako nevyplněné a do průměrů se nepočítají.</p>';
+        wireTooltips();
+      } catch (err) {
+        app.innerHTML = '<div class="error">Chyba: ' + esc(err.message) + '</div>';
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

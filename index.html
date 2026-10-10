@@ -2,64 +2,122 @@
 <html lang="cs">
 <head>
   <meta charset="UTF-8">
+  <meta name="theme-color" content="#f6f3ec">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>Meal Tracker</title>
   <style>
+    :root {
+      --bg: #f6f3ec;
+      --surface: #ffffff;
+      --inset: #f3efe6;
+      --line: #e4dfd3;
+      --ink: #1d2621;
+      --ink-2: #4f5952;
+      --muted: #6b7268;
+      --accent: #2e7d57;
+      --accent-soft: #e3f1e8;
+      --amber: #a15c07;
+      --amber-soft: #fcf1d6;
+      --red: #b93a32;
+      --red-soft: #fbe7e4;
+      --round: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #1a1a2e;
-      color: #e0e0e0;
+      background: var(--bg);
+      color: var(--ink-2);
       min-height: 100vh;
       padding: 16px;
       padding-bottom: 80px;
+      max-width: 640px;
+      margin: 0 auto;
     }
     h1 {
+      font-family: var(--round);
       text-align: center;
-      font-size: 24px;
-      margin-bottom: 8px;
-      color: #fff;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      margin-bottom: 12px;
+      color: var(--ink);
+    }
+    h1 .dot { color: var(--accent); }
+    .nav {
+      display: flex;
+      gap: 4px;
+      background: var(--inset);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 14px;
+    }
+    .nav a {
+      flex: 1;
+      text-align: center;
+      padding: 9px;
+      border-radius: 9px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .nav a.active {
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: 0 1px 2px rgba(29, 38, 33, 0.08);
     }
     .week-info {
-      text-align: center;
-      font-size: 14px;
-      color: #888;
+      display: flex;
+      justify-content: center;
       margin-bottom: 20px;
+    }
+    .week-select {
+      background: var(--surface);
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-family: inherit;
     }
     .category { margin-bottom: 24px; }
     .category h2 {
+      font-family: var(--round);
       font-size: 18px;
-      color: #f0a500;
+      color: var(--ink);
       margin-bottom: 10px;
       padding-bottom: 4px;
-      border-bottom: 1px solid #333;
+      border-bottom: 1px solid var(--line);
     }
     .meal-card {
       display: flex;
       align-items: center;
-      background: #16213e;
-      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
       padding: 12px 16px;
       margin-bottom: 8px;
       transition: background 0.3s;
     }
-    .meal-card.done { background: #1b3a2a; }
-    .meal-card.in-progress { background: #2a2a1b; }
+    .meal-card.done { background: var(--accent-soft); border-color: #cfe6d8; }
+    .meal-card.in-progress { background: var(--amber-soft); border-color: #f1e2b8; }
     .meal-info { flex: 1; }
-    .meal-name { font-size: 16px; font-weight: 600; color: #fff; }
-    .meal-cover { font-size: 13px; color: #888; margin-top: 2px; }
+    .meal-name { font-size: 16px; font-weight: 600; color: var(--ink); }
+    .meal-cover { font-size: 13px; color: var(--muted); margin-top: 2px; }
     .meal-progress { display: flex; align-items: center; gap: 8px; }
     .progress-text {
       font-size: 18px;
       font-weight: 700;
       min-width: 60px;
       text-align: center;
-      color: #fff;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
     }
-    .progress-text.done { color: #4ade80; }
-    .progress-text.in-progress { color: #fbbf24; }
+    .progress-text.done { color: var(--accent); }
+    .progress-text.in-progress { color: var(--amber); }
     .btn {
       width: 44px;
       height: 44px;
@@ -75,16 +133,16 @@
       -webkit-tap-highlight-color: transparent;
     }
     .btn:active { transform: scale(0.9); }
-    .btn-minus { background: #3a1c1c; color: #f87171; }
-    .btn-plus { background: #1c3a1c; color: #4ade80; }
+    .btn-minus { background: var(--red-soft); color: var(--red); }
+    .btn-plus { background: var(--accent); color: #fff; }
     .btn:disabled { opacity: 0.3; cursor: default; }
     .meal-card { cursor: pointer; }
     .meal-details {
       max-height: 0;
       overflow: hidden;
       transition: max-height 0.3s ease;
-      background: #0f1a33;
-      border-radius: 0 0 12px 12px;
+      background: var(--inset);
+      border-radius: 0 0 14px 14px;
       margin-top: -8px;
       margin-bottom: 8px;
     }
@@ -96,21 +154,21 @@
       font-size: 13px;
     }
     .meal-details th {
-      color: #f0a500;
+      color: var(--muted);
       font-weight: 600;
       text-align: left;
-      padding: 4px 8px;
-      border-bottom: 1px solid #333;
+      padding: 8px 8px 4px;
+      border-bottom: 1px solid var(--line);
       font-size: 12px;
     }
     .meal-details td {
       padding: 4px 8px;
-      color: #ccc;
+      color: var(--ink-2);
     }
-    .meal-details td:first-child { color: #fff; }
-    .meal-details td.dash { color: #555; }
+    .meal-details td:first-child { color: var(--ink); }
+    .meal-details td.dash { color: #b3b8b0; }
     .chevron {
-      color: #555;
+      color: #b3b8b0;
       font-size: 14px;
       margin-left: 8px;
       transition: transform 0.3s;
@@ -120,22 +178,24 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: #16213e;
-      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
       padding: 14px 18px;
       margin-bottom: 8px;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
     .section-header h2 {
-      font-size: 18px;
-      color: #f0a500;
+      font-family: var(--round);
+      font-size: 17px;
+      color: var(--ink);
       margin: 0;
       border: none;
       padding: 0;
     }
     .section-header .chevron {
-      color: #f0a500;
+      color: var(--accent);
       font-size: 14px;
       transition: transform 0.3s;
     }
@@ -147,19 +207,20 @@
     }
     .section-body.open { max-height: 2000px; }
     .section-content {
-      background: #16213e;
-      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
       padding: 16px;
       margin-bottom: 16px;
     }
     .section-content h3 {
-      color: #f0a500;
+      color: var(--ink);
       font-size: 15px;
       margin-bottom: 10px;
     }
     .section-content p, .section-content li {
       font-size: 14px;
-      color: #ccc;
+      color: var(--ink-2);
       line-height: 1.6;
     }
     .section-content ul {
@@ -175,19 +236,19 @@
     .recipe-toggle button {
       flex: 1;
       padding: 10px;
-      border-radius: 8px;
-      border: 2px solid #333;
+      border-radius: 10px;
+      border: 1.5px solid var(--line);
       background: transparent;
-      color: #888;
+      color: var(--muted);
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
     .recipe-toggle button.active {
-      border-color: #f0a500;
-      color: #f0a500;
-      background: #2a2510;
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-soft);
     }
     .recipe-table {
       width: 100%;
@@ -196,111 +257,120 @@
       margin-bottom: 12px;
     }
     .recipe-table th {
-      color: #f0a500;
+      color: var(--muted);
       font-weight: 600;
       text-align: left;
       padding: 6px 8px;
-      border-bottom: 1px solid #333;
+      border-bottom: 1px solid var(--line);
       font-size: 12px;
     }
     .recipe-table td {
       padding: 6px 8px;
-      color: #ccc;
+      color: var(--ink-2);
     }
     .tip-card {
-      background: #0f1a33;
-      border-radius: 8px;
+      background: var(--inset);
+      border-radius: 10px;
       padding: 10px 14px;
       margin-bottom: 8px;
     }
     .tip-card .tip-label {
-      color: #f0a500;
+      color: var(--accent);
       font-size: 12px;
       font-weight: 600;
       margin-bottom: 4px;
     }
     .tip-card .tip-value {
-      color: #fff;
+      color: var(--ink);
       font-size: 14px;
     }
     .calc-row { margin-bottom: 12px; }
     .calc-row label {
       display: block;
       font-size: 13px;
-      color: #888;
+      color: var(--muted);
       margin-bottom: 6px;
     }
     .calc-input {
       width: 100%;
       padding: 10px 14px;
-      border-radius: 8px;
-      border: 2px solid #333;
-      background: #0f1a33;
-      color: #fff;
+      border-radius: 10px;
+      border: 1.5px solid var(--line);
+      background: var(--surface);
+      color: var(--ink);
       font-size: 18px;
       font-weight: 600;
       -webkit-appearance: none;
     }
     .calc-input:focus {
       outline: none;
-      border-color: #f0a500;
+      border-color: var(--accent);
     }
     .calc-bowl-select { display: flex; gap: 8px; }
     .calc-bowl {
       flex: 1;
       padding: 8px;
-      border-radius: 8px;
-      border: 2px solid #333;
+      border-radius: 10px;
+      border: 1.5px solid var(--line);
       background: transparent;
-      color: #888;
+      color: var(--muted);
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
     .calc-bowl.active {
-      border-color: #f0a500;
-      color: #f0a500;
-      background: #2a2510;
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-soft);
     }
     .calc-result {
-      background: #0f1a33;
-      border-radius: 10px;
+      background: var(--inset);
+      border-radius: 12px;
       padding: 14px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       min-height: 52px;
     }
-    .calc-food-total { font-size: 14px; color: #888; }
+    .calc-food-total { font-size: 14px; color: var(--muted); }
     .calc-per-portion {
       font-size: 24px;
       font-weight: 700;
-      color: #4ade80;
+      color: var(--accent);
     }
-    .empty-state { text-align: center; padding: 60px 20px; color: #666; }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
     .empty-state p { font-size: 16px; margin-top: 12px; }
     .summary-bar {
       position: fixed;
       bottom: 0; left: 0; right: 0;
-      background: #16213e;
-      border-top: 1px solid #333;
+      background: rgba(255, 255, 255, 0.92);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--line);
       padding: 14px 20px;
       display: flex;
       justify-content: space-around;
       align-items: center;
       font-size: 15px;
       font-weight: 600;
+      color: var(--ink-2);
     }
-    .summary-bar .done-count { color: #4ade80; }
-    .summary-bar .remaining { color: #fbbf24; }
-    .loading { text-align: center; padding: 60px; color: #666; font-size: 18px; }
-    .error { text-align: center; padding: 40px; color: #f87171; font-size: 14px; }
+    .summary-bar .done-count { color: var(--accent); }
+    .summary-bar .remaining { color: var(--amber); }
+    .loading { text-align: center; padding: 60px; color: var(--muted); font-size: 18px; }
+    .error { text-align: center; padding: 40px; color: var(--red); font-size: 14px; }
   </style>
 </head>
 <body>
-  <h1>Meal Tracker</h1>
-  <div class="week-info" id="weekInfo">Loading...</div>
+  <h1>Meal Tracker<span class="dot">.</span></h1>
+  <nav class="nav">
+    <a href="./" class="active">T&#253;den</a>
+    <a href="stats.html">Statistiky</a>
+  </nav>
+  <div class="week-info">
+    <select class="week-select" id="weekSelect" onchange="selectWeek(this.value)"></select>
+  </div>
   <div id="app"><div class="loading">Loading...</div></div>
   <!-- Lunch Recipe Section -->
   <div style="margin-top: 32px;">
@@ -328,7 +398,7 @@
             <tr data-naty="50" data-filip="40"><td>T&#283;stoviny</td><td>50g</td><td>40g</td><td class="n-week">350g</td><td class="f-week">280g</td><td class="total-week">630g</td></tr>
             <tr data-naty="80" data-filip="100"><td>Ob&#283;d zelenina</td><td>80g</td><td>100g</td><td class="n-week">560g</td><td class="f-week">700g</td><td class="total-week">1260g</td></tr>
           </table>
-          <p style="color:#888;font-size:12px;">V&#225;hy jsou v syrov&#233;m stavu, na porci.</p>
+          <p style="color:var(--muted);font-size:12px;">V&#225;hy jsou v syrov&#233;m stavu, na porci.</p>
         </div>
 
         <div id="recipe-chicken" style="display:none">
@@ -340,7 +410,7 @@
             <tr data-naty="80" data-filip="100"><td>Ob&#283;d zelenina</td><td>80g</td><td>100g</td><td class="n-week">560g</td><td class="f-week">700g</td><td class="total-week">1260g</td></tr>
             <tr data-naty="150" data-filip="150"><td>Jogurt</td><td>150g</td><td>150g</td><td class="n-week">1050g</td><td class="f-week">1050g</td><td class="total-week">2100g</td></tr>
           </table>
-          <p style="color:#888;font-size:12px;">V&#225;hy jsou v syrov&#233;m stavu, na porci.</p>
+          <p style="color:var(--muted);font-size:12px;">V&#225;hy jsou v syrov&#233;m stavu, na porci.</p>
         </div>
 
         <h3 style="margin-top:16px">N&#225;doby &amp; v&#225;hy</h3>
@@ -425,7 +495,7 @@
           <button id="btn-priloha-beef" class="active" onclick="switchPriloha('beef')">T&#283;stoviny (hov&#283;z&#237;)</button>
           <button id="btn-priloha-chicken" onclick="switchPriloha('chicken')">R&#253;&#382;e (ku&#345;ec&#237;)</button>
         </div>
-        <p style="font-size:13px;color:#888;margin-bottom:12px" id="priloha-ratio-info">Pom&#283;r: Naty 350g : Filip 280g (surov&#233;)</p>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:12px" id="priloha-ratio-info">Pom&#283;r: Naty 350g : Filip 280g (surov&#233;)</p>
         <div class="calc-row">
           <label>Celkov&#225; v&#225;ha uva&#345;en&#233; p&#345;&#237;lohy (g)</label>
           <input type="number" id="priloha-total" class="calc-input" placeholder="nap&#345;. 1500" oninput="calcPriloha()">
@@ -436,14 +506,14 @@
         </div>
         <div style="display:flex;gap:12px;margin-top:4px">
           <div class="calc-result" style="flex:1;flex-direction:column;align-items:center">
-            <span style="color:#888;font-size:13px">Naty</span>
+            <span style="color:var(--muted);font-size:13px">Naty</span>
             <span class="calc-per-portion" id="priloha-naty">&#8212;</span>
-            <span style="color:#666;font-size:11px" id="priloha-naty-total"></span>
+            <span style="color:var(--muted);font-size:11px" id="priloha-naty-total"></span>
           </div>
           <div class="calc-result" style="flex:1;flex-direction:column;align-items:center">
-            <span style="color:#888;font-size:13px">Filip</span>
+            <span style="color:var(--muted);font-size:13px">Filip</span>
             <span class="calc-per-portion" id="priloha-filip">&#8212;</span>
-            <span style="color:#666;font-size:11px" id="priloha-filip-total"></span>
+            <span style="color:var(--muted);font-size:11px" id="priloha-filip-total"></span>
           </div>
         </div>
       </div>
@@ -485,7 +555,7 @@
         <h3 style="margin-top:16px">Pitn&#253; re&#382;im</h3>
         <div class="tip-card"><div class="tip-label">Filip</div><div class="tip-value">3,2 l vody denn&#283; + 0,5&#8211;1 l b&#283;hem tr&#233;ninku</div></div>
         <div class="tip-card"><div class="tip-label">Naty</div><div class="tip-value">2,5 l vody denn&#283; + 0,5 l b&#283;hem tr&#233;ninku</div></div>
-        <p style="color:#888;font-size:12px;margin-top:8px;">Kofein dehydratuje &#8212; doplnit tekutiny nav&#237;c. Posledn&#237; j&#237;dlo p&#345;ed tr&#233;ninkem 1,5&#8211;2h.</p>
+        <p style="color:var(--muted);font-size:12px;margin-top:8px;">Kofein dehydratuje &#8212; doplnit tekutiny nav&#237;c. Posledn&#237; j&#237;dlo p&#345;ed tr&#233;ninkem 1,5&#8211;2h.</p>
       </div>
     </div>
   </div>
@@ -513,6 +583,12 @@
     ];
 
     let meals = [];
+    let allMeals = [];
+
+    function selectWeek(week) {
+      meals = allMeals.filter(m => m.week_start === week);
+      render();
+    }
 
     async function loadMeals() {
       try {
@@ -523,20 +599,21 @@
           .order('id', { ascending: true });
 
         if (error) throw error;
-        if (!data || data.length === 0) {
-          meals = [];
-          render();
-          return;
-        }
-
-        const latestWeek = data[0].week_start;
-        meals = data.filter(m => m.week_start === latestWeek);
-        document.getElementById('weekInfo').textContent = 'Week of ' + latestWeek;
-        render();
+        allMeals = data || [];
+        const weeks = [...new Set(allMeals.map(m => m.week_start))];
+        const sel = document.getElementById('weekSelect');
+        sel.innerHTML = weeks.map(w => '<option value="' + w + '">T\u00fdden od ' + formatDate(w) + '</option>').join('');
+        sel.style.display = weeks.length ? '' : 'none';
+        selectWeek(weeks[0]);
       } catch (err) {
         document.getElementById('app').innerHTML =
           '<div class="error">Error: ' + err.message + '</div>';
       }
+    }
+
+    function formatDate(iso) {
+      const [y, m, d] = iso.split('-').map(Number);
+      return d + '. ' + m + '. ' + y;
     }
 
     async function updateCount(id, delta) {
@@ -581,7 +658,7 @@
     function render() {
       const app = document.getElementById('app');
       if (meals.length === 0) {
-        app.innerHTML = '<div class="empty-state"><p>No meals for this week yet.</p><p style="margin-top:8px;color:#555">Run /meal-prep to populate the tracker.</p></div>';
+        app.innerHTML = '<div class="empty-state"><p>No meals for this week yet.</p><p style="margin-top:8px;color:var(--muted)">Run /meal-prep to populate the tracker.</p></div>';
         document.getElementById('summaryBar').style.display = 'none';
         return;
       }
