@@ -1,0 +1,14 @@
+[Unit]
+Description=Meal kcal (local calorie view for meal-tracker)
+After=network-online.target tailscaled.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 %h/code/meal-tracker/kcal-app/server.py
+Restart=on-failure
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target
