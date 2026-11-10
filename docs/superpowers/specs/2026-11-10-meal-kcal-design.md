@@ -116,14 +116,15 @@ The Rohlik and Supabase connectors are reachable only from a Claude session, so 
 4. For ingredients without Rohlik nutrition (loose produce, mixes), keep or insert values marked `source='estimate'` with a note.
    The starting estimates are:
    - egg M: ~50 g edible per piece
-   - egg white: ~33 g per piece
    - banana: ~120 g edible per piece
    - apple: ~150 g per piece
+   - egg white: ~33 g per piece (the 1 kg pack is counted as 30 pieces in `products`)
    - zelenina mix (cucumber, cherry tomato, carrot, Chinese cabbage): ~20 kcal per 100 g
    - potatoes: ~77 kcal per 100 g
-   - frozen wok vegetables: taken from the product if it can be found, otherwise an estimate
-5. "protein" (powder) and "ořechové máslo" are not in recent orders. Ask the user which products they are. Until then they stay
-   missing and are shown as warnings.
+   If Rohlik returns no values for apple, potato, cucumber or similar loose produce, use standard table values marked as estimates.
+5. Ořechové máslo (Vilgain Arašídový krém) and the wok vegetables (Agro Jesenice Čínská) already have preferred products, so they use Rohlik values.
+   "protein" (powder) is not bought on Rohlik (`on_rohlik = false`) and has no product. Ask the user which product it is and use the values from its label.
+   Until then it stays missing and is shown as a warning.
 
 ## Running
 
