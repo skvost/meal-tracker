@@ -45,6 +45,7 @@ class FakeClient:
         self.tables = tables if tables is not None else TABLES
         self.fail = False
         self.targets_set = []
+        self.row_cap = None
 
     def select(self, table, query):
         if self.fail:
@@ -59,6 +60,12 @@ class FakeClient:
                 rows = [r for r in rows if str(r.get(key)) == val]
             elif op == "is" and val == "true":
                 rows = [r for r in rows if r.get(key, True) is True]
+        order = params.get("order", [""])[0]
+        if order:
+            col, _, direction = order.partition(".")
+            rows.sort(key=lambda r: r.get(col) or 0, reverse=direction == "desc")
+        if self.row_cap is not None:
+            rows = rows[:self.row_cap]
         return rows
 
     def set_target(self, person, kcal):

@@ -1,5 +1,6 @@
 import json
 import os
+import socket
 import tempfile
 import unittest
 import urllib.error
@@ -38,6 +39,13 @@ class AppWeekTest(unittest.TestCase):
         status, body = self.app.week(None)
         self.assertEqual(status, 502)
         self.assertIn("connect timeout", body["error"])
+
+    def test_latest_week_survives_row_cap(self):
+        # PostgREST caps responses (max_rows); the newest week must never be the one cut off.
+        client = FakeClient()
+        client.row_cap = 1
+        status, body = App(client).week(None)
+        self.assertEqual(body["week"], "2026-11-09")
 
     def test_week_no_data(self):
         app = App(FakeClient({"kcal_targets": [{"person": "naty", "kcal": 1500}, {"person": "filip", "kcal": 2400}]}))
@@ -103,14 +111,30 @@ class ConfigTest(unittest.TestCase):
 
 
 class HttpTest(unittest.TestCase):
-    def test_bind_skips_unavailable_address(self):
+    def _close(self, servers):
+        for s in servers:
+            s.shutdown()
+            s.server_close()
+
+    def test_bind_address_not_yet_present(self):
+        # Tailscale address not up yet at boot: bind must still succeed (IP_FREEBIND).
         servers = serve(App(FakeClient()), ["127.0.0.1", "203.0.113.1"], 0)
         try:
-            self.assertEqual(len(servers), 1)
+            self.assertEqual(len(servers), 2)
         finally:
-            for s in servers:
-                s.shutdown()
-                s.server_close()
+            self._close(servers)
+
+    def test_bind_skips_failing_address(self):
+        blocker = socket.socket()
+        blocker.bind(("127.0.0.1", 0))
+        blocker.listen()
+        port = blocker.getsockname()[1]
+        servers = serve(App(FakeClient()), ["127.0.0.1", "203.0.113.1"], port)
+        try:
+            self.assertEqual([s.server_address[0] for s in servers], ["203.0.113.1"])
+        finally:
+            self._close(servers)
+            blocker.close()
 
     def test_http_routes(self):
         client = FakeClient()

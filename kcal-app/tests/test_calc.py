@@ -92,6 +92,22 @@ class ComputeWeekTest(unittest.TestCase):
         self.assertEqual(r["people"]["naty"]["avg"]["kcal"], 210)
         self.assertTrue(r["people"]["naty"]["incomplete"])
 
+    def test_week_with_no_known_recipes(self):
+        rows = [{"meal_key": None, "category": "snidane", "meal_name": "Snídaně 1", "cover_name": "", "total": 7}]
+        naty = run(rows=rows)["people"]["naty"]
+        self.assertFalse(naty["known"])
+        self.assertIsNone(naty["avg"]["kcal"])
+        self.assertIsNone(naty["min_day"])
+        self.assertIsNone(naty["max_day"])
+        self.assertIsNone(naty["diff"])
+        self.assertIsNone(naty["diff_pct"])
+        self.assertTrue(naty["unknown_recipes"])
+
+    def test_known_flags_on_normal_week(self):
+        naty = run()["people"]["naty"]
+        self.assertTrue(naty["known"])
+        self.assertFalse(naty["unknown_recipes"])
+
     def test_person_absent_from_category(self):
         rows = ROWS + [
             {"meal_key": "va", "category": "vecere", "meal_name": "Večeře A", "cover_name": "", "total": 3},

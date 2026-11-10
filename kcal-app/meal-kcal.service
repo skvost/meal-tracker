@@ -1,7 +1,5 @@
 [Unit]
 Description=Meal kcal (local calorie view for meal-tracker)
-After=network-online.target tailscaled.service
-Wants=network-online.target
 
 [Service]
 Type=simple

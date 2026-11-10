@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import re
+import socket
 import sys
 import threading
 from datetime import date
@@ -20,6 +21,7 @@ INDEX = os.path.join(HERE, "static", "index.html")
 CONFIG_PATH = os.path.expanduser("~/.config/meal-kcal/env")
 PORT = 8765
 MAX_TARGET = 10000
+IP_FREEBIND = getattr(socket, "IP_FREEBIND", 15)  # Linux
 
 log = logging.getLogger("meal-kcal")
 
@@ -38,7 +40,9 @@ class App:
             except ValueError:
                 return 400, {"error": "Neplatné datum týdne: %s" % start}
         try:
-            weeks = sorted({r["week_start"] for r in self.client.select("weekly_meals", "select=week_start")}, reverse=True)
+            # Ordered newest first so PostgREST's row cap (max_rows) can only ever drop the oldest weeks.
+            weeks = sorted({r["week_start"] for r in self.client.select(
+                "weekly_meals", "select=week_start&order=week_start.desc")}, reverse=True)
             week = start or (weeks[0] if weeks else None)
             rows = []
             if week:
@@ -140,13 +144,21 @@ def make_handler(app):
     return Handler
 
 
+class FreebindHTTPServer(ThreadingHTTPServer):
+    """Binds even when the address is not configured yet (e.g. Tailscale still starting at boot)."""
+
+    def server_bind(self):
+        self.socket.setsockopt(socket.IPPROTO_IP, IP_FREEBIND, 1)
+        super().server_bind()
+
+
 def serve(app, addrs, port):
     """Start one server thread per address; skip addresses that cannot be bound."""
     handler = make_handler(app)
     servers = []
     for addr in addrs:
         try:
-            httpd = ThreadingHTTPServer((addr, port), handler)
+            httpd = FreebindHTTPServer((addr, port), handler)
         except OSError as e:
             log.warning("cannot bind %s:%s (%s), skipping", addr, port, e)
             continue

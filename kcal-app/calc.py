@@ -81,12 +81,15 @@ def compute_week(rows, meal_ingredients, ingredients, nutrition, targets):
     for p in PERSONS:
         week = {k: 0.0 for k in MACROS}
         incomplete = False
+        unknown_recipes = False
+        known_meals = 0
         daily_kcal = 0.0
         options = {}  # category -> list of meal kcal for non-daily meals this person eats
         for row, daily, result in computed:
             if result is None:
-                incomplete = True
+                incomplete = unknown_recipes = True
                 continue
+            known_meals += 1
             raw, inc = result
             incomplete = incomplete or inc[p]
             total = row.get("total") or 0
@@ -97,8 +100,14 @@ def compute_week(rows, meal_ingredients, ingredients, nutrition, targets):
             elif raw[p]["kcal"] > 0:
                 options.setdefault(row["category"], []).append(raw[p]["kcal"])
 
-        avg = {k: v / DAILY_TOTAL for k, v in week.items()}
         target = targets.get(p)
+        if not known_meals:
+            # No recipe known for this week (e.g. weeks before meal_key existed): nothing to show, not "0 kcal".
+            people[p] = {"target": target, "avg": {k: None for k in MACROS}, "min_day": None, "max_day": None,
+                         "diff": None, "diff_pct": None, "incomplete": True, "known": False,
+                         "unknown_recipes": unknown_recipes}
+            continue
+        avg = {k: v / DAILY_TOTAL for k, v in week.items()}
         diff = avg["kcal"] - target if target else None
         people[p] = {
             "target": target,
@@ -108,6 +117,8 @@ def compute_week(rows, meal_ingredients, ingredients, nutrition, targets):
             "diff": round(diff) if diff is not None else None,
             "diff_pct": round(100 * diff / target) if target else None,
             "incomplete": incomplete,
+            "known": True,
+            "unknown_recipes": unknown_recipes,
         }
 
     return {"people": people, "meals": meals}
