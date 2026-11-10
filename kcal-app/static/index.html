@@ -1,1 +1,316 @@
-<!doctype html><title>Meal kcal</title>
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f6f3ec">
+  <title>Meal kcal</title>
+  <style>
+    :root {
+      --bg: #f6f3ec;
+      --surface: #ffffff;
+      --inset: #f3efe6;
+      --line: #e4dfd3;
+      --ink: #1d2621;
+      --ink-2: #4f5952;
+      --muted: #6b7268;
+      --accent: #2e7d57;
+      --accent-soft: #e3f1e8;
+      --amber: #a15c07;
+      --amber-soft: #fcf1d6;
+      --red: #b93a32;
+      --red-soft: #fbe7e4;
+      --round: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--ink-2);
+      min-height: 100vh;
+      padding: 16px;
+      padding-bottom: 60px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-family: var(--round);
+      text-align: center;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      margin-bottom: 12px;
+      color: var(--ink);
+    }
+    h1 .dot { color: var(--accent); }
+    .nav { display: flex; gap: 4px; background: var(--inset); border-radius: 12px; padding: 4px; margin-bottom: 14px; }
+    .nav button {
+      flex: 1; padding: 9px; border: 0; border-radius: 9px; background: transparent;
+      font-family: inherit; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer;
+    }
+    .nav button.active { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(29, 38, 33, 0.08); }
+    .week-info { display: flex; justify-content: center; margin-bottom: 16px; }
+    .week-select {
+      background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+      border-radius: 10px; padding: 8px 12px; font-size: 14px; font-family: inherit;
+    }
+    .people { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+    @media (max-width: 460px) { .people { grid-template-columns: 1fr; } }
+    .person { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+    .person h2 { font-family: var(--round); font-size: 18px; color: var(--ink); margin-bottom: 6px; }
+    .avg { font-size: 13px; color: var(--muted); }
+    .avg b { display: block; font-size: 28px; color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
+    .bar { position: relative; height: 8px; background: var(--inset); border-radius: 4px; margin: 10px 0 8px; overflow: hidden; }
+    .bar i { position: absolute; inset: 0 auto 0 0; border-radius: 4px; background: var(--accent); }
+    .bar i.over { background: var(--amber); }
+    .bar i.under { background: var(--red); }
+    .bar .mark { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink); opacity: 0.35; }
+    .row { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 3px 0; }
+    .row span:last-child { color: var(--ink); font-variant-numeric: tabular-nums; text-align: right; }
+    .target input {
+      width: 72px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 7px;
+      font: inherit; color: var(--ink); text-align: right; background: var(--inset);
+    }
+    .target input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+    .row span.ok { color: var(--accent); }
+    .row span.over { color: var(--amber); }
+    .row span.under { color: var(--red); }
+    .note { font-size: 12px; color: var(--amber); margin-top: 6px; }
+    .msg { font-size: 12px; margin-top: 4px; min-height: 14px; }
+    .msg.err { color: var(--red); }
+    .msg.ok { color: var(--accent); }
+    .category { margin-bottom: 22px; }
+    .category h2 {
+      font-family: var(--round); font-size: 18px; color: var(--ink);
+      margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--line);
+      display: flex; justify-content: space-between; align-items: baseline;
+    }
+    .category h2 small { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; font-weight: 600; color: var(--muted); display: flex; }
+    .category h2 small span, .meal-kcal span { width: 64px; text-align: right; }
+    .meal-card {
+      display: flex; align-items: center; background: var(--surface); border: 1px solid var(--line);
+      border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; width: 100%;
+      font: inherit; text-align: left; color: inherit;
+    }
+    .meal-info { flex: 1; min-width: 0; }
+    .meal-name { font-size: 15px; font-weight: 600; color: var(--ink); }
+    .meal-cover { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 6px; margin-left: 6px; vertical-align: 1px; }
+    .badge.daily { background: var(--accent-soft); color: var(--accent); }
+    .badge.times { background: var(--inset); color: var(--muted); }
+    .badge.warn { background: var(--amber-soft); color: var(--amber); }
+    .meal-kcal { display: flex; font-size: 16px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .chevron { color: #b3b8b0; font-size: 13px; margin-left: 8px; transition: transform 0.2s; }
+    .meal-card[aria-expanded="true"] .chevron { transform: rotate(180deg); }
+    .meal-details { display: none; background: var(--inset); border-radius: 0 0 14px 14px; margin: -10px 0 8px; padding: 12px 10px 10px; }
+    .meal-details.open { display: block; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+    th { color: var(--muted); font-weight: 600; text-align: right; padding: 6px 6px 4px; border-bottom: 1px solid var(--line); font-size: 12px; }
+    td { padding: 4px 6px; text-align: right; color: var(--ink-2); white-space: nowrap; }
+    td:first-child { white-space: normal; }
+    th:first-child, td:first-child { text-align: left; }
+    td:first-child { color: var(--ink); }
+    td.missing { color: var(--red); }
+    tr.sum td { border-top: 1px solid var(--line); font-weight: 600; color: var(--ink); }
+    .macros { font-size: 12px; color: var(--muted); margin-top: 8px; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 16px; }
+    .card.error { background: var(--red-soft); border-color: #f1c9c4; color: var(--red); }
+    .card.error b { display: block; margin-bottom: 4px; }
+    .scroll { overflow-x: auto; }
+    #ingredients tr.missing td { background: var(--red-soft); }
+    .src { font-size: 12px; white-space: nowrap; }
+    .src.est { color: var(--amber); }
+    .loading { text-align: center; color: var(--muted); padding: 40px 0; }
+    .foot { font-size: 12px; color: var(--muted); text-align: center; margin-top: 18px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <h1>Meal kcal<span class="dot">.</span></h1>
+  <nav class="nav">
+    <button type="button" class="active" data-tab="meals">Jídla</button>
+    <button type="button" data-tab="ingredients">Suroviny</button>
+  </nav>
+  <div id="meals-tab">
+    <div class="week-info"><select class="week-select" id="week" aria-label="Týden"></select></div>
+    <div id="app"><div class="loading">Načítám…</div></div>
+  </div>
+  <div id="ingredients-tab" hidden>
+    <div id="ingredients"><div class="loading">Načítám…</div></div>
+  </div>
+
+  <script>
+    const PEOPLE = [['naty', 'Naty'], ['filip', 'Filip']];
+    const CATEGORIES = [['snidane', 'Snídaně'], ['svaciny', 'Svačiny'], ['auto', 'Oběd'], ['obed', 'Oběd'], ['vecere', 'Večeře']];
+    let data = null;
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    }
+    function num(n, d = 0) {
+      if (n == null) return '?';
+      return Number(n).toLocaleString('cs-CZ', { maximumFractionDigits: d, minimumFractionDigits: 0 });
+    }
+    function czDate(iso, withYear = true) {
+      const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+      return d + '. ' + m + '.' + (withYear ? ' ' + y : '');
+    }
+    function signed(n) { return (n > 0 ? '+' : n < 0 ? '−' : '±') + num(Math.abs(n)); }
+
+    async function api(path, opts) {
+      const r = await fetch(path, opts);
+      let body = {};
+      try { body = await r.json(); } catch (e) { /* non-JSON */ }
+      if (!r.ok) throw new Error(body.error || ('HTTP ' + r.status));
+      return body;
+    }
+
+    function errorCard(err) {
+      return '<div class="card error"><b>Supabase je uspaný nebo nedostupný</b>' + esc(err.message) + '</div>';
+    }
+
+    async function loadWeek(start) {
+      const app = document.getElementById('app');
+      try {
+        data = await api('/api/week' + (start ? '?start=' + encodeURIComponent(start) : ''));
+      } catch (err) {
+        data = null;
+        app.innerHTML = errorCard(err);
+        return;
+      }
+      const sel = document.getElementById('week');
+      sel.innerHTML = data.weeks.map(w => '<option value="' + w + '"' + (w === data.week ? ' selected' : '') + '>Týden od ' + czDate(w) + '</option>').join('');
+      sel.hidden = !data.weeks.length;
+      render();
+    }
+
+    function personCard(key, label) {
+      const p = data.people[key];
+      const ge = p.incomplete ? '≥ ' : '';
+      const ratio = p.target ? p.avg.kcal / p.target : 0;
+      const cls = ratio > 1.1 ? 'over' : ratio < 0.9 ? 'under' : '';
+      const width = Math.min(ratio, 1.3) / 1.3 * 100;
+      const mark = 100 / 1.3;
+      return '<div class="person"><h2>' + label + '</h2>' +
+        '<div class="avg">Průměrný den<b>' + ge + num(p.avg.kcal) + ' kcal</b></div>' +
+        '<div class="bar" title="' + Math.round(ratio * 100) + ' % cíle"><i class="' + cls + '" style="width:' + width + '%"></i><span class="mark" style="left:' + mark + '%"></span></div>' +
+        '<div class="row target"><span>Cíl</span><span><input type="number" inputmode="numeric" min="1" max="9999" step="1" value="' + (p.target || '') + '" data-person="' + key + '" aria-label="Cíl ' + label + ' kcal"> kcal</span></div>' +
+        '<div class="row"><span>Rozdíl</span><span class="' + (cls || 'ok') + '">' + ge + signed(p.diff) + ' kcal (' + signed(p.diff_pct) + ' %)</span></div>' +
+        '<div class="row"><span>Nejlehčí–nejtěžší den</span><span>' + ge + num(p.min_day) + '–' + num(p.max_day) + ' kcal</span></div>' +
+        '<div class="row"><span>B / S / T</span><span>' + num(p.avg.protein) + ' / ' + num(p.avg.carbs) + ' / ' + num(p.avg.fat) + ' g</span></div>' +
+        (p.incomplete ? '<div class="note">Některé suroviny nemají hodnoty, skutečnost je vyšší.</div>' : '') +
+        '<div class="msg" id="msg-' + key + '"></div></div>';
+    }
+
+    function kcalCell(pp) {
+      if (pp.kcal == null) return '?';
+      return (pp.incomplete ? '≥' : '') + num(pp.kcal);
+    }
+
+    function mealHtml(m, i) {
+      const badges = (m.daily ? '<span class="badge daily">denně</span>' : '<span class="badge times">×' + m.total + '</span>') +
+        m.missing.map(n => '<span class="badge warn">⚠ chybí: ' + esc(n) + '</span>').join('');
+      let rows = m.ingredients.map(ing => {
+        const cells = PEOPLE.map(([k]) => {
+          const g = ing.grams[k], kc = ing.kcal[k];
+          if (!ing.amount[k]) return '<td>—</td><td>—</td>';
+          const gText = ing.unit === 'ks' ? num(ing.amount[k], 1) + ' ks' + (g != null ? ' (' + num(g) + ' g)' : '') : num(g) + ' g';
+          return '<td>' + gText + '</td><td' + (kc == null ? ' class="missing">?' : '>' + num(kc)) + '</td>';
+        }).join('');
+        return '<tr><td' + (ing.missing ? ' class="missing"' : '') + '>' + esc(ing.name) + '</td>' + cells + '</tr>';
+      }).join('');
+      rows += '<tr class="sum"><td>Celkem</td>' + PEOPLE.map(([k]) => '<td></td><td>' + kcalCell(m.per_person[k]) + '</td>').join('') + '</tr>';
+      const macros = PEOPLE.map(([k, label]) => {
+        const pp = m.per_person[k];
+        return label + ': B ' + num(pp.protein, 1) + ' g · S ' + num(pp.carbs, 1) + ' g · T ' + num(pp.fat, 1) + ' g';
+      }).join('<br>');
+      const details = m.ingredients.length
+        ? '<div class="scroll"><table><thead><tr><th>Surovina</th><th>Naty</th><th>kcal</th><th>Filip</th><th>kcal</th></tr></thead><tbody>' + rows + '</tbody></table></div><div class="macros">' + macros + '</div>'
+        : '<div class="macros">Recept k tomuto jídlu není v databázi.</div>';
+      return '<button type="button" class="meal-card" aria-expanded="false" aria-controls="d' + i + '">' +
+        '<div class="meal-info"><div class="meal-name">' + esc(m.meal_name) + badges + '</div><div class="meal-cover">' + esc(m.cover_name) + '</div></div>' +
+        '<div class="meal-kcal"><span>' + kcalCell(m.per_person.naty) + '</span><span>' + kcalCell(m.per_person.filip) + '</span></div><span class="chevron">▼</span></button>' +
+        '<div class="meal-details" id="d' + i + '">' + details + '</div>';
+    }
+
+    function render() {
+      const app = document.getElementById('app');
+      if (!data.meals.length) { app.innerHTML = '<div class="loading">Pro tento týden nejsou žádná jídla.</div>'; return; }
+      let html = '<div class="people">' + PEOPLE.map(([k, l]) => personCard(k, l)).join('') + '</div>';
+      let i = 0;
+      const seen = new Set();
+      for (const [cat, label] of CATEGORIES) {
+        const meals = data.meals.filter(m => m.category === cat);
+        if (!meals.length || seen.has(label)) continue;
+        seen.add(label);
+        const all = data.meals.filter(m => CATEGORIES.some(([c, l]) => l === label && c === m.category));
+        html += '<div class="category"><h2>' + label + '<small><span>Naty</span><span>Filip</span><span style="width:21px"></span></small></h2>' +
+          all.map(m => mealHtml(m, i++)).join('') + '</div>';
+      }
+      const other = data.meals.filter(m => !CATEGORIES.some(([c]) => c === m.category));
+      if (other.length) html += '<div class="category"><h2>Ostatní</h2>' + other.map(m => mealHtml(m, i++)).join('') + '</div>';
+      html += '<p class="foot">kcal za jednu porci jídla. Průměrný den = všechna naplánovaná jídla týdne / 7.<br>Jídla „denně“ se počítají do každého dne, z ostatních kategorií jedno jídlo denně.</p>';
+      app.innerHTML = html;
+    }
+
+    async function saveTarget(input) {
+      const person = input.dataset.person;
+      const msg = document.getElementById('msg-' + person);
+      const prev = data.people[person].target;
+      const kcal = Number(input.value);
+      if (!Number.isInteger(kcal) || kcal < 1 || kcal > 9999) {
+        msg.className = 'msg err'; msg.textContent = 'Zadej celé číslo 1–9999.'; input.value = prev; return;
+      }
+      if (kcal === prev) return;
+      try {
+        await api('/api/targets/' + person, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kcal }) });
+        await loadWeek(data.week);
+        const m = document.getElementById('msg-' + person);
+        if (m) { m.className = 'msg ok'; m.textContent = 'Uloženo'; setTimeout(() => { m.textContent = ''; }, 2000); }
+      } catch (err) {
+        input.value = prev;
+        msg.className = 'msg err'; msg.textContent = err.message;
+      }
+    }
+
+    async function loadIngredients() {
+      const box = document.getElementById('ingredients');
+      let body;
+      try { body = await api('/api/ingredients'); } catch (err) { box.innerHTML = errorCard(err); return; }
+      const rows = body.ingredients.map(r => {
+        const src = r.missing ? '<span class="src">chybí</span>'
+          : r.source === 'rohlik' ? '<span class="src" title="' + esc(r.note || '') + '">Rohlík ' + czDate(r.updated_at, false) + '</span>'
+          : '<span class="src est" title="' + esc(r.note || '') + '">odhad</span>';
+        return '<tr' + (r.missing ? ' class="missing"' : '') + '><td>' + esc(r.name) + '<div class="meal-cover">' + esc(r.product_name || (r.source === 'estimate' ? (r.note || '') : '')) + '</div></td>' +
+          '<td>' + num(r.kcal) + '</td><td>' + (r.kcal == null ? '?' : num(r.protein, 1) + ' / ' + num(r.carbs, 1) + ' / ' + num(r.fat, 1)) + '</td>' +
+          '<td>' + (r.unit === 'ks' ? (r.grams_per_piece == null ? '?' : num(r.grams_per_piece)) : '—') + '</td><td>' + src + '</td></tr>';
+      }).join('');
+      box.innerHTML = '<div class="card scroll"><table><thead><tr><th>Surovina / produkt</th><th>kcal/100 g</th><th>B / S / T</th><th>g/ks</th><th>Zdroj</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+        '<p class="foot">Hodnoty na 100 g syrové/suché suroviny. „Odhad“ = Rohlík hodnoty nemá, použita tabulková hodnota (detail po najetí myší).</p>';
+    }
+
+    document.getElementById('week').addEventListener('change', e => loadWeek(e.target.value));
+    document.getElementById('app').addEventListener('click', e => {
+      const card = e.target.closest('.meal-card');
+      if (!card) return;
+      const open = card.getAttribute('aria-expanded') !== 'true';
+      card.setAttribute('aria-expanded', String(open));
+      document.getElementById(card.getAttribute('aria-controls')).classList.toggle('open', open);
+    });
+    document.getElementById('app').addEventListener('change', e => { if (e.target.matches('.target input')) saveTarget(e.target); });
+    document.getElementById('app').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('.target input')) e.target.blur(); });
+    function showTab(tab) {
+      document.querySelectorAll('.nav button').forEach(x => x.classList.toggle('active', x.dataset.tab === tab));
+      document.getElementById('meals-tab').hidden = tab !== 'meals';
+      document.getElementById('ingredients-tab').hidden = tab !== 'ingredients';
+      if (tab === 'ingredients') loadIngredients();
+    }
+    document.querySelectorAll('.nav button').forEach(b => b.addEventListener('click', () => {
+      history.replaceState(null, '', b.dataset.tab === 'ingredients' ? '#suroviny' : location.pathname);
+      showTab(b.dataset.tab);
+    }));
+
+    loadWeek();
+    if (location.hash === '#suroviny') showTab('ingredients');
+  </script>
+</body>
+</html>
